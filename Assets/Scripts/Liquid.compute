@@ -7,8 +7,90 @@ struct Speck
 RWStructuredBuffer<Speck> Specks;
 RWStructuredBuffer<Speck> SortedSpecks;
 
-#pragma kernel UpdateSpecks
-[numthreads(256, 1, 1)]
-void UpdateSpecks (uint3 id : SV_DispatchThreadID)
+float A;
+float B;
+float C;
+float D;
+float E;
+
+uint NumSpecks;
+float SpeckRadius;
+float Damper;
+float Bounds;
+float DeltaTime;
+
+float3 Gravity;
+
+float Attraction(float x)
 {
+	return C * exp((x + E) / -D);
+}
+
+float Repulsion(float x)
+{
+	return A * exp(-x / B);
+}
+
+float3 ProjectOnPlane(float3 vec, float3 normal)
+{
+    return vec - (normal * dot(vec, normal));
+}
+
+void ClampInBounds(float3 axis, uint id)
+{
+	Speck speck = Specks[id];
+
+	float pos = dot(speck.Pos, axis);
+	float s = sign(pos);
+	float mag = abs(pos);
+	if (mag > Bounds)
+	{
+		Specks[id].Pos = ProjectOnPlane(Specks[id].Pos, axis) + axis * Bounds * s;
+		Specks[id].Vel = ProjectOnPlane(Specks[id].Vel, axis);
+	}
+}
+
+#pragma kernel UpdateVelocities
+[numthreads(256, 1, 1)]
+void UpdateVelocities (uint3 id : SV_DispatchThreadID)
+{
+	float3 force = float3(0, 0, 0);
+	Speck thisSpeck = Specks[id.x];
+	for (uint i = 0; i < NumSpecks; i++)
+	{
+		if (id.x == i)
+			continue;
+
+		Speck otherSpeck = Specks[i];
+		float x = max(0, distance(thisSpeck.Pos, otherSpeck.Pos) - SpeckRadius);
+		float forceMag = Attraction(x) - Repulsion(x);
+		float3 displacement = normalize(otherSpeck.Pos - thisSpeck.Pos);
+
+		if (length(displacement) == 0)
+		{
+			displacement = float3(1, 0, 0);
+		}
+
+		force += forceMag * displacement;
+	}
+
+	float3 a = force + Gravity;
+	Specks[id.x].Vel += a * DeltaTime;
+	Specks[id.x].Vel *= 1 - Damper;
+}
+
+#pragma kernel UpdatePositions
+[numthreads(256, 1, 1)]
+void UpdatePositions (uint3 id : SV_DispatchThreadID)
+{
+	Specks[id.x].Pos += Specks[id.x].Vel * DeltaTime;
+
+	if (Specks[id.x].Pos.y <= 0)
+	{
+		Specks[id.x].Pos.y = 0;
+		Specks[id.x].Vel.y = 0;
+	}
+
+	ClampInBounds(float3(1, 0, 0), id.x);
+	ClampInBounds(float3(0, 0, 1), id.x);
 }
