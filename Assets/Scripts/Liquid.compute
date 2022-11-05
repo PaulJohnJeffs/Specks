@@ -1,0 +1,14 @@
+struct Speck
+{
+	float3 Pos;
+	float3 Vel;
+};
+
+RWStructuredBuffer<Speck> Specks;
+RWStructuredBuffer<Speck> SortedSpecks;
+
+#pragma kernel UpdateSpecks
+[numthreads(256, 1, 1)]
+void UpdateSpecks (uint3 id : SV_DispatchThreadID)
+{
+}
