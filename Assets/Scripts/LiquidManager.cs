@@ -42,7 +42,7 @@ public class LiquidManager : MonoBehaviour
 		Speck[] speckDatas = new Speck[_numSpecks];
 		for (int i = 0; i < _numSpecks; i++)
 		{
-			Vector3 pos = new Vector3(Random.value - 0.5f, Random.value - 0.5f, Random.value - 0.5f) * _bounds;
+			Vector3 pos = new Vector3(Random.value - 0.5f, Random.value, Random.value - 0.5f) * _bounds;
 			Speck speck = new Speck()
 			{
 				Pos = pos,
@@ -63,7 +63,7 @@ public class LiquidManager : MonoBehaviour
 		_renderParams = new RenderParams(_speckMat);
 		_renderParams.matProps = new MaterialPropertyBlock();
 		_renderParams.matProps.SetBuffer("Specks", _speckCB);
-		_renderParams.worldBounds = new Bounds(Vector3.zero, Vector3.one * _bounds * 2f);
+		_renderParams.worldBounds = new Bounds(Vector3.zero, Vector3.one * 1000f);
     }
 
 	public void Update()
@@ -85,6 +85,9 @@ public class LiquidManager : MonoBehaviour
 
 		_computeShader.Dispatch(_updateVelocitiesIdx, Mathf.CeilToInt((float)_numSpecks / 256), 1, 1);
 		_computeShader.Dispatch(_updatePositionsIdx, Mathf.CeilToInt((float)_numSpecks / 256), 1, 1);
+
+		Speck[] read = new Speck[_numSpecks];
+		_speckCB.GetData(read);
 
 		Graphics.RenderMeshPrimitives(_renderParams, _speckMesh, 0, _numSpecks);
 	}

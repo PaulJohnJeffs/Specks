@@ -43,9 +43,10 @@ void ClampInBounds(float3 axis, uint id)
 	float pos = dot(speck.Pos, axis);
 	float s = sign(pos);
 	float mag = abs(pos);
-	if (mag > Bounds)
+	if (mag > Bounds / 2)
 	{
-		Specks[id].Pos = ProjectOnPlane(Specks[id].Pos, axis) + axis * Bounds * s;
+		float3 position = Specks[id].Pos;
+		Specks[id].Pos = ProjectOnPlane(position, axis) + (axis * (Bounds / 2) * s);
 		Specks[id].Vel = ProjectOnPlane(Specks[id].Vel, axis);
 	}
 }
@@ -66,9 +67,9 @@ void UpdateVelocities (uint3 id : SV_DispatchThreadID)
 		float forceMag = Attraction(x) - Repulsion(x);
 		float3 displacement = normalize(otherSpeck.Pos - thisSpeck.Pos);
 
-		if (length(displacement) == 0)
+		if (distance(thisSpeck.Pos, otherSpeck.Pos) == 0)
 		{
-			displacement = float3(1, 0, 0);
+			displacement = float3(0, id.x < i, 0);
 		}
 
 		force += forceMag * displacement;

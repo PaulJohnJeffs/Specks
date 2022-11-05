@@ -12,11 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 12fed203cf2b02a40ab51688c3f4522a, type: 3}
   m_Name: Liquid Speck Config
   m_EditorClassIdentifier: 
-  RepulsionA: 10
-  RepulsionB: 0.004
-  AttractionC: 194
-  AttractionD: 0.09
-  AttractionE: 0.5
+  RepulsionA: 2
+  RepulsionB: 0.02
+  AttractionC: 0.1
+  AttractionD: 0.1
+  AttractionE: 0.2
   Multiplier: 1
   Mass: 1
-  Damper: 0.04
+  Damper: 0.01
