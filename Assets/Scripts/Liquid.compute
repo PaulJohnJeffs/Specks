@@ -17,6 +17,7 @@ uint NumSpecks;
 float SpeckRadius;
 float Damper;
 float Bounds;
+float BoundsForce;
 float DeltaTime;
 
 float3 Gravity;
@@ -75,9 +76,43 @@ void UpdateVelocities (uint3 id : SV_DispatchThreadID)
 		force += forceMag * displacement;
 	}
 
+	force += Repulsion(max(0, Specks[id.x].Pos.y)) * float3(0, BoundsForce, 0);
+	
+	float3 p = Specks[id.x].Pos;
+	if (p.x < -Bounds / 2)
+	{
+		float k = p.x + (Bounds / 2);
+		k = max(0, k);
+		force += float3(BoundsForce, 0, 0) * Repulsion(k);
+	}
+	else if (p.x > Bounds / 2)
+	{
+		float k = (Bounds / 2) - p.x;
+		k = max(0, k);
+		force += float3(-BoundsForce, 0, 0) * Repulsion(k);
+	}
+
+	if (p.z < -Bounds / 2)
+	{
+		float k = p.z + (Bounds / 2);
+		k = max(0, k);
+		force += float3(0, 0, BoundsForce) * Repulsion(k);
+		//Specks[id.x].Vel.z *= -0.5;
+	}
+	else if (p.z > Bounds / 2)
+	{
+		float k = (Bounds / 2) - p.z;
+		k = max(0, k);
+		force += float3(0, 0, -BoundsForce) * Repulsion(k);
+	}
+
 	float3 a = force + Gravity;
 	Specks[id.x].Vel += a * DeltaTime;
 	Specks[id.x].Vel *= 1 - Damper;
+	if (isnan(length(Specks[id.x].Vel)))
+	{
+		Specks[id.x].Vel = float3(0, 0, 0);
+	}
 }
 
 #pragma kernel UpdatePositions
@@ -86,12 +121,12 @@ void UpdatePositions (uint3 id : SV_DispatchThreadID)
 {
 	Specks[id.x].Pos += Specks[id.x].Vel * DeltaTime;
 
-	if (Specks[id.x].Pos.y <= 0)
-	{
-		Specks[id.x].Pos.y = 0;
-		Specks[id.x].Vel.y = 0;
-	}
+	//if (Specks[id.x].Pos.y <= 0)
+	//{
+	//	Specks[id.x].Pos.y = 0;
+	//	Specks[id.x].Vel.y = 0;
+	//}
 
-	ClampInBounds(float3(1, 0, 0), id.x);
-	ClampInBounds(float3(0, 0, 1), id.x);
+	//ClampInBounds(float3(1, 0, 0), id.x);
+	//ClampInBounds(float3(0, 0, 1), id.x);
 }

@@ -19,6 +19,8 @@ public class LiquidManager : MonoBehaviour
 	[SerializeField]
 	private float _bounds = 1f;
 	[SerializeField]
+	private float _boundsForce = 5f;
+	[SerializeField]
 	private LiquidSpeckConfig _config;
 	[SerializeField]
 	private ComputeShader _computeShader;
@@ -78,6 +80,7 @@ public class LiquidManager : MonoBehaviour
 		_computeShader.SetFloat("SpeckRadius", _speckRadius);
 		_computeShader.SetFloat("Damper", _config.Damper);
 		_computeShader.SetFloat("Bounds", _bounds);
+		_computeShader.SetFloat("BoundsForce", _boundsForce);
 		_computeShader.SetFloat("DeltaTime", Time.deltaTime);
 		_computeShader.SetVector("Gravity", Physics.gravity);
 
