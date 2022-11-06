@@ -120,7 +120,7 @@ void UpdateVelocities (uint3 id : SV_DispatchThreadID)
 
 				debugPos = thisSpeck.Pos;
 
-				uint partIdx = (PartsPerDim * z) + (partsPerPlane * y) + x;
+				uint partIdx = (partsPerPlane * z) + (PartsPerDim * y) + x;
 				uint partStart = PfxSumB[partIdx] - PartCounts[partIdx];
 				uint partEnd = PfxSumB[partIdx];
 
