@@ -26,7 +26,9 @@ Shader "Unlit/Liquid"
 			};
 
 			StructuredBuffer<Speck> Specks;
+			StructuredBuffer<uint2> PartIndices;
 			float SpeckRadius;
+			uint PartsPerDim;
 
             struct appdata
             {
@@ -57,12 +59,23 @@ Shader "Unlit/Liquid"
 				float4x4 pv = mul(UNITY_MATRIX_P, UNITY_MATRIX_V);
 				float4x4 mvp = mul(pv, modelMatrix);
 				o.vertex = mul(mvp, v.vertex);
+				o.instanceID = v.instanceID;
                 return o;
             }
 
             fixed4 frag (v2f i) : SV_Target
             {
-                return _col;
+				uint idx = PartIndices[i.instanceID].x;
+
+				uint x = idx % PartsPerDim;
+				uint y = (idx / PartsPerDim) % PartsPerDim;
+				uint z = (idx / (PartsPerDim * PartsPerDim));
+
+				float3 rgb = float3(x, y, z) / PartsPerDim;
+
+				return float4(rgb, 1);
+
+                //return _col;
             }
             ENDCG
         }

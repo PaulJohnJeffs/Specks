@@ -35,15 +35,37 @@ public class LiquidManager : MonoBehaviour
 	private Mesh _speckMesh;
 
 	private ComputeBuffer _speckCB;
+	private ComputeBuffer _sortedSpeckCB;
+	private ComputeBuffer _partIndicesCB;
+	private ComputeBuffer _partCountsCB;
+	private ComputeBuffer _pfxSumACB;
+	private ComputeBuffer _pfxSumBCB;
+	private RenderParams _renderParams;
+
 	private int _updateVelocitiesIdx;
 	private int _updatePositionsIdx;
+	private int _populatePartitionsIdx;
+	private int _sumPartCountsIdx;
+	private int _clearBuffersIdx;
+	private int _sortSpecksIdx;
 
-	private RenderParams _renderParams;
+	private int _partsPerDim;
+	private int _numParts;
 
     void Start()
     {
+		_partsPerDim = Mathf.CeilToInt(_bounds / _maxDist);
+		_numParts = _partsPerDim * _partsPerDim * _partsPerDim;
+		_bounds = _partsPerDim * _maxDist;
+		_computeShader.SetInt("PartsPerDim", _partsPerDim);
+		_computeShader.SetInt("NumParts", _numParts);
+
 		_speckCB = new ComputeBuffer(_numSpecks, SPECK_DATA_SIZE);
-		//_sortedSpeckCB = new ComputeBuffer(_numSpecks, SPECK_DATA_SIZE);
+		_sortedSpeckCB = new ComputeBuffer(_numSpecks, SPECK_DATA_SIZE);
+		_partIndicesCB = new ComputeBuffer(_numSpecks, 2 * sizeof(uint));
+		_partCountsCB = new ComputeBuffer(_numParts, sizeof(uint));
+		_pfxSumACB = new ComputeBuffer(_numParts, sizeof(uint));
+		_pfxSumBCB = new ComputeBuffer(_numParts, sizeof(uint));
 
 		Speck[] speckDatas = new Speck[_numSpecks];
 		int numPerDim = Mathf.FloorToInt(_bounds / _speckDiameter);
@@ -52,7 +74,6 @@ public class LiquidManager : MonoBehaviour
 			float x = (i % numPerDim) * _speckDiameter + (_speckDiameter / 2f);
 			float z = ((i / numPerDim) % numPerDim) * _speckDiameter + (_speckDiameter / 2f);
 			float y = (i / (numPerDim * numPerDim)) * _speckDiameter + (_speckDiameter / 2f);
-			//Vector3 pos = new Vector3(Random.value - 0.5f, Random.value - 0.5f, Random.value - 0.5f) * _bounds;
 			Vector3 pos = new Vector3(x, y, z) - (new Vector3(1, 1, 1) * (_bounds / 2));
 			Speck speck = new Speck()
 			{
@@ -70,12 +91,58 @@ public class LiquidManager : MonoBehaviour
 
 		_updatePositionsIdx = _computeShader.FindKernel("UpdatePositions");
 		_computeShader.SetBuffer(_updatePositionsIdx, "Specks", _speckCB);
+		_computeShader.SetBuffer(_updatePositionsIdx, "SortedSpecks", _sortedSpeckCB);
+		_computeShader.SetBuffer(_updatePositionsIdx, "PartIndices", _partIndicesCB);
+		_computeShader.SetBuffer(_updatePositionsIdx, "PartCounts", _partCountsCB);
+
+		_populatePartitionsIdx = _computeShader.FindKernel("PopulatePartitions");
+		_computeShader.SetBuffer(_populatePartitionsIdx, "Specks", _speckCB);
+		_computeShader.SetBuffer(_populatePartitionsIdx, "PartIndices", _partIndicesCB);
+		_computeShader.SetBuffer(_populatePartitionsIdx, "PartCounts", _partCountsCB);
+
+		_sumPartCountsIdx = _computeShader.FindKernel("SumPartCounts");
+
+		_clearBuffersIdx = _computeShader.FindKernel("ClearBuffers");
+		_computeShader.SetBuffer(_clearBuffersIdx, "PartCounts", _partCountsCB);
+
+		_sortSpecksIdx = _computeShader.FindKernel("SortSpecks");
+		_computeShader.SetBuffer(_sortSpecksIdx, "PartIndices", _partIndicesCB);
+		_computeShader.SetBuffer(_sortSpecksIdx, "PartCounts", _partCountsCB);
+		_computeShader.SetBuffer(_sortSpecksIdx, "Specks", _speckCB);
+		_computeShader.SetBuffer(_sortSpecksIdx, "SortedSpecks", _sortedSpeckCB);
 
 		_renderParams = new RenderParams(_speckMat);
 		_renderParams.matProps = new MaterialPropertyBlock();
 		_renderParams.matProps.SetBuffer("Specks", _speckCB);
+		_renderParams.matProps.SetBuffer("PartIndices", _partIndicesCB);
+		_renderParams.matProps.SetInt("PartsPerDim", _partsPerDim);
 		_renderParams.worldBounds = new Bounds(Vector3.zero, Vector3.one * 1000f);
     }
+
+	private void SumPartCounts()
+	{
+		// Clear the buffers
+		_computeShader.Dispatch(_clearBuffersIdx, Mathf.CeilToInt((float)_numParts / 256), 1, 1);
+
+		// Set prefix sum buffers
+		_computeShader.SetBuffer(_sumPartCountsIdx, "PfxSumA", _partCountsCB);
+		_computeShader.SetBuffer(_sumPartCountsIdx, "PfxSumB", _pfxSumBCB);
+
+		int i = 0;
+		for (int n = 1; n < _numParts; i++)
+		{
+			_computeShader.SetInt("PfxSumPower", n);
+			_computeShader.Dispatch(_sumPartCountsIdx, Mathf.CeilToInt((float)_numParts / 256), 1, 1);
+
+			_computeShader.SetBuffer(_sumPartCountsIdx, "PfxSumA", (i & 1) == 0 ? _pfxSumBCB : _pfxSumACB);
+			_computeShader.SetBuffer(_sumPartCountsIdx, "PfxSumB", (i & 1) == 0 ? _pfxSumACB : _pfxSumBCB);
+
+			n <<= 1;
+		}
+
+		_computeShader.SetBuffer(_updateVelocitiesIdx, "PfxSumB", (i & 1) == 0 ? _pfxSumACB : _pfxSumBCB);
+		_computeShader.SetBuffer(_sortSpecksIdx, "PfxSumB", (i & 1) == 0 ? _pfxSumACB : _pfxSumBCB);
+	}
 
 	public void Update()
 	{
@@ -91,19 +158,22 @@ public class LiquidManager : MonoBehaviour
 		_computeShader.SetFloat("SpeckRadius", _speckDiameter);
 		_computeShader.SetFloat("Damper", _config.Damper);
 		_computeShader.SetFloat("Bounds", _bounds);
-		_computeShader.SetFloat("MaxVel", _maxVel);
 		_computeShader.SetFloat("MaxDist", _maxDist);
+		_computeShader.SetFloat("MaxVel", _maxVel);
 		_computeShader.SetFloat("BoundsForce", _boundsForce);
 		_computeShader.SetFloat("DeltaTime", Time.deltaTime);
 		_computeShader.SetVector("Gravity", Physics.gravity);
 
 		_renderParams.matProps.SetFloat("SpeckRadius", _speckDiameter);
 
+		_computeShader.Dispatch(_populatePartitionsIdx, Mathf.CeilToInt((float)_numSpecks / 256), 1, 1);
+
+		SumPartCounts();
+
+		_computeShader.Dispatch(_sortSpecksIdx, Mathf.CeilToInt((float)_numSpecks / 256), 1, 1);
+
 		_computeShader.Dispatch(_updateVelocitiesIdx, Mathf.CeilToInt((float)_numSpecks / 256), 1, 1);
 		_computeShader.Dispatch(_updatePositionsIdx, Mathf.CeilToInt((float)_numSpecks / 256), 1, 1);
-
-		Speck[] read = new Speck[_numSpecks];
-		_speckCB.GetData(read);
 
 		Graphics.RenderMeshPrimitives(_renderParams, _speckMesh, 0, _numSpecks);
 	}
@@ -111,5 +181,10 @@ public class LiquidManager : MonoBehaviour
 	private void OnDestroy()
 	{
 		_speckCB.Release();
+		_sortedSpeckCB.Release();
+		_partIndicesCB.Release();
+		_partCountsCB.Release();
+		_pfxSumACB.Release();
+		_pfxSumBCB.Release();
 	}
 }

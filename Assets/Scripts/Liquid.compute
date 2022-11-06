@@ -6,6 +6,12 @@ struct Speck
 
 RWStructuredBuffer<Speck> Specks;
 RWStructuredBuffer<Speck> SortedSpecks;
+RWStructuredBuffer<uint> PartCounts;
+RWStructuredBuffer<uint2> PartIndices;
+
+RWStructuredBuffer<uint> PfxSumA;
+RWStructuredBuffer<uint> PfxSumB;
+uint PfxSumPower;
 
 float A;
 float B;
@@ -20,6 +26,8 @@ float Damper;
 float MaxVel;
 float MaxDist;
 float Bounds;
+uint PartsPerDim;
+uint NumParts;
 float BoundsForce;
 float Multiplier;
 float DeltaTime;
@@ -57,9 +65,20 @@ void ClampInBounds(float3 axis, uint id)
 		{
 			Specks[id].Vel = ProjectOnPlane(Specks[id].Vel, axis);
 		}
-
-		//Specks[id].Pos *= 0.99;
 	}
+}
+
+uint3 GetPartCoords(float3 pos)
+{
+	pos += float3(1, 1, 1) * (Bounds / 2);
+	pos /= MaxDist;
+	return ceil(pos) - 1;
+}
+
+uint GetPartitionIdx(float3 pos)
+{
+	uint3 coords = GetPartCoords(pos);
+	return coords.x + (coords.y * PartsPerDim) + (coords.z * PartsPerDim * PartsPerDim);
 }
 
 #pragma kernel UpdateVelocities
@@ -68,33 +87,71 @@ void UpdateVelocities (uint3 id : SV_DispatchThreadID)
 {
 	float3 force = float3(0, 0, 0);
 	Speck thisSpeck = Specks[id.x];
-	for (uint i = 0; i < NumSpecks; i++)
+
+	uint partIdx = PartIndices[id.x].x;
+	uint subPartIdx = PartIndices[id.x].y;
+	uint partOffset = PartCounts[partIdx];
+	uint sortedIdx = partOffset + subPartIdx;
+
+	uint partsPerPlane = PartsPerDim * PartsPerDim;
+
+	uint3 partCoords = GetPartCoords(thisSpeck.Pos);
+
+	for	(uint z = partCoords.z - 1; z <= partCoords.z + 1; z++)
 	{
-		Speck otherSpeck = Specks[i];
-
-		if (id.x == i || distance(thisSpeck.Pos, otherSpeck.Pos) > MaxDist)
-			continue;
-
-		//float x = max(0, distance(thisSpeck.Pos, otherSpeck.Pos);// - SpeckRadius);
-		float x = distance(thisSpeck.Pos, otherSpeck.Pos);// - SpeckRadius);
-		float forceMag = Attraction(x) - Repulsion(x);
-		float3 toOther = normalize(otherSpeck.Pos - thisSpeck.Pos);
-
-		if (distance(thisSpeck.Pos, otherSpeck.Pos) == 0)
+		for	(uint y = partCoords.y - 1; y <= partCoords.y + 1; y++)
 		{
-			toOther = normalize(thisSpeck.Pos) * (-1 * (id.x < i));
-		}
+			for	(uint x = partCoords.x - 1; x <= partCoords.x + 1; x++)
+			{
+				uint partIdx = (PartsPerDim * z) + (partsPerPlane * y) + x;
+				uint partStart = PfxSumA[partIdx];
+				uint partEnd = PfxSumA[partIdx + 1];
 
-		force += forceMag * toOther;
+				for	(uint i = partStart; i < partEnd; i++)
+				{
+					Speck otherSpeck = SortedSpecks[i];
+
+					float dist = distance(thisSpeck.Pos, otherSpeck.Pos);
+
+					if (isnan(dist) || i == sortedIdx || dist > MaxDist)
+						continue;
+
+					float forceMag = Attraction(dist) - Repulsion(dist);
+					float3 toOther = normalize(otherSpeck.Pos - thisSpeck.Pos);
+
+					if (dist == 0)
+					{
+						toOther = normalize(thisSpeck.Pos) * (-1 * (sortedIdx < i));
+					}
+
+					force += forceMag * toOther;
+				}
+			}
+		}
 	}
+
+	//for (uint i = 0; i < NumSpecks; i++)
+	//{
+	//	Speck otherSpeck = Specks[i];
+
+	//	if (id.x == i || distance(thisSpeck.Pos, otherSpeck.Pos) > MaxDist)
+	//		continue;
+
+	//	float x = distance(thisSpeck.Pos, otherSpeck.Pos);
+	//	float forceMag = Attraction(x) - Repulsion(x);
+	//	float3 toOther = normalize(otherSpeck.Pos - thisSpeck.Pos);
+
+	//	if (distance(thisSpeck.Pos, otherSpeck.Pos) == 0)
+	//	{
+	//		toOther = normalize(thisSpeck.Pos) * (-1 * (id.x < i));
+	//	}
+
+	//	force += forceMag * toOther;
+	//}
 
 	float3 a = (force * Multiplier) + Gravity;
 	Specks[id.x].Vel += a * DeltaTime;
 	Specks[id.x].Vel *= 1 - Damper;
-	//if (isnan(length(Specks[id.x].Vel)))
-	//{
-	//	Specks[id.x].Vel = float3(0, 0, 0);
-	//}
 
 	if (length(Specks[id.x].Vel) > MaxVel)
 	{
@@ -107,49 +164,46 @@ void UpdateVelocities (uint3 id : SV_DispatchThreadID)
 void UpdatePositions (uint3 id : SV_DispatchThreadID)
 {
 	Specks[id.x].Pos += Specks[id.x].Vel * DeltaTime;
-	//
-	//float3 p = Specks[id.x].Pos;
-
-	//if (p.y < 0)
-	//{
-	//	Specks[id.x].Pos.y = 0;
-	//	Specks[id.x].Vel.y = max(0, Specks[id.x].Vel.y);
-	//}
-
-	//if (p.x < -Bounds / 2)
-	//{
-	//	float k = p.x + (Bounds / 2);
-	//	k = max(0, k);
-	//	force += float3(BoundsForce, 0, 0) * Repulsion(k);
-	//}
-	//else if (p.x > Bounds / 2)
-	//{
-	//	float k = (Bounds / 2) - p.x;
-	//	k = max(0, k);
-	//	force += float3(-BoundsForce, 0, 0) * Repulsion(k);
-	//}
-
-	//if (p.z < -Bounds / 2)
-	//{
-	//	float k = p.z + (Bounds / 2);
-	//	k = max(0, k);
-	//	force += float3(0, 0, BoundsForce) * Repulsion(k);
-	//	//Specks[id.x].Vel.z *= -0.5;
-	//}
-	//else if (p.z > Bounds / 2)
-	//{
-	//	float k = (Bounds / 2) - p.z;
-	//	k = max(0, k);
-	//	force += float3(0, 0, -BoundsForce) * Repulsion(k);
-	//}
-
-	//if (Specks[id.x].Pos.y <= 0)
-	//{
-	//	Specks[id.x].Pos.y = 0;
-	//	Specks[id.x].Vel.y = 0;
-	//}
 
 	ClampInBounds(float3(1, 0, 0), id.x);
 	ClampInBounds(float3(0, 1, 0), id.x);
 	ClampInBounds(float3(0, 0, 1), id.x);
+}
+
+#pragma kernel PopulatePartitions
+[numthreads(256, 1, 1)]
+void PopulatePartitions (uint id : SV_DispatchThreadID)
+{
+	uint partIdx = GetPartitionIdx(Specks[id.x].Pos);
+	PartIndices[id.x].x = partIdx;
+	InterlockedAdd(PartCounts[id.x], 1, PartIndices[id.x].y);
+}
+
+#pragma kernel SumPartCounts
+[numthreads(256, 1, 1)]
+void SumPartCounts (uint id : SV_DispatchThreadID)
+{
+	if (id.x > NumParts)
+		return;
+
+	PfxSumB[id.x] = PfxSumA[id.x] + ((id.x < PfxSumPower) * PfxSumA[id.x - PfxSumPower]);
+}
+
+#pragma kernel ClearBuffers
+[numthreads(256, 1, 1)]
+void ClearBuffers (uint id : SV_DispatchThreadID)
+{
+	PartCounts[id.x] == 0;
+}
+
+#pragma kernel SortSpecks
+[numthreads(256, 1, 1)]
+void SortSpecks (uint id : SV_DispatchThreadID)
+{
+	int partIdx = PartIndices[id.x].x;
+	int subPartIdx = PartIndices[id.x].y;
+	int partOffset = PfxSumB[partIdx];
+
+	int globalIdx = partOffset + subPartIdx;
+	SortedSpecks[globalIdx] = Specks[id.x];
 }
