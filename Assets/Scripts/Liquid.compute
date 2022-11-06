@@ -151,10 +151,10 @@ void UpdateVelocities (uint3 id : SV_DispatchThreadID)
 void UpdatePositions (uint3 id : SV_DispatchThreadID)
 {
 	Specks[id.x].Pos += Specks[id.x].Vel * DeltaTime;
-
-	ClampInBounds(float3(1, 0, 0), id.x);
-	ClampInBounds(float3(0, 1, 0), id.x);
-	ClampInBounds(float3(0, 0, 1), id.x);
+	Specks[id.x].Pos = clamp(Specks[id.x].Pos, -Bounds / 2, Bounds / 2);
+	//ClampInBounds(float3(1, 0, 0), id.x);
+	//ClampInBounds(float3(0, 1, 0), id.x);
+	//ClampInBounds(float3(0, 0, 1), id.x);
 }
 
 #pragma kernel PopulatePartitions
