@@ -90,7 +90,7 @@ void UpdateVelocities (uint3 id : SV_DispatchThreadID)
 
 	uint partIdx = PartIndices[id.x].x;
 	uint subPartIdx = PartIndices[id.x].y;
-	uint partOffset = PartCounts[partIdx];
+	int partOffset = PfxSumB[partIdx] - PartCounts[partIdx];
 	uint sortedIdx = partOffset + subPartIdx;
 
 	uint partsPerPlane = PartsPerDim * PartsPerDim;
