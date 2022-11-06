@@ -88,6 +88,9 @@ public class LiquidManager : MonoBehaviour
 
 		_updateVelocitiesIdx = _computeShader.FindKernel("UpdateVelocities");
 		_computeShader.SetBuffer(_updateVelocitiesIdx, "Specks", _speckCB);
+		_computeShader.SetBuffer(_updateVelocitiesIdx, "SortedSpecks", _sortedSpeckCB);
+		_computeShader.SetBuffer(_updateVelocitiesIdx, "PartIndices", _partIndicesCB);
+		_computeShader.SetBuffer(_updateVelocitiesIdx, "PartCounts", _partCountsCB);
 
 		_updatePositionsIdx = _computeShader.FindKernel("UpdatePositions");
 		_computeShader.SetBuffer(_updatePositionsIdx, "Specks", _speckCB);

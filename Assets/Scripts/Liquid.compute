@@ -95,17 +95,34 @@ void UpdateVelocities (uint3 id : SV_DispatchThreadID)
 
 	uint partsPerPlane = PartsPerDim * PartsPerDim;
 
-	uint3 partCoords = GetPartCoords(thisSpeck.Pos);
+	int3 partCoords = GetPartCoords(thisSpeck.Pos);
 
-	for	(uint z = partCoords.z - 1; z <= partCoords.z + 1; z++)
+	int xMid = partIdx % PartsPerDim;
+	int yMid = (partIdx / PartsPerDim) % PartsPerDim;
+	int zMid = (partIdx / partsPerPlane);
+
+	float3 debugPos = float3(0,0,0);
+
+	for	(int z = zMid - 1; z <= zMid + 1; z++)
 	{
-		for	(uint y = partCoords.y - 1; y <= partCoords.y + 1; y++)
+		if (z < 0)
+			continue;
+
+		for	(int y = yMid - 1; y <= yMid + 1; y++)
 		{
-			for	(uint x = partCoords.x - 1; x <= partCoords.x + 1; x++)
+			if (y < 0)
+				continue;
+
+			for	(int x = xMid - 1; x <= xMid + 1; x++)
 			{
+				if (x < 0)
+					continue;
+
+				debugPos = thisSpeck.Pos;
+
 				uint partIdx = (PartsPerDim * z) + (partsPerPlane * y) + x;
-				uint partStart = PfxSumA[partIdx];
-				uint partEnd = PfxSumA[partIdx + 1];
+				uint partStart = PfxSumB[partIdx] - PartCounts[partIdx];
+				uint partEnd = PfxSumB[partIdx];
 
 				for	(uint i = partStart; i < partEnd; i++)
 				{
@@ -130,6 +147,8 @@ void UpdateVelocities (uint3 id : SV_DispatchThreadID)
 		}
 	}
 
+	//Specks[id.x].Pos = debugPos;
+
 	//for (uint i = 0; i < NumSpecks; i++)
 	//{
 	//	Speck otherSpeck = Specks[i];
@@ -146,7 +165,7 @@ void UpdateVelocities (uint3 id : SV_DispatchThreadID)
 	//		toOther = normalize(thisSpeck.Pos) * (-1 * (id.x < i));
 	//	}
 
-	//	force += forceMag * toOther;
+	//	//force += forceMag * toOther;
 	//}
 
 	float3 a = (force * Multiplier) + Gravity;
