@@ -121,9 +121,6 @@ public class LiquidManager : MonoBehaviour
 
 	private void SumPartCounts()
 	{
-		// Clear the buffers
-		_computeShader.Dispatch(_clearBuffersIdx, Mathf.CeilToInt((float)_numParts / 256), 1, 1);
-
 		// Set prefix sum buffers
 		_computeShader.SetBuffer(_sumPartCountsIdx, "PfxSumA", _partCountsCB);
 		_computeShader.SetBuffer(_sumPartCountsIdx, "PfxSumB", _pfxSumBCB);
@@ -166,6 +163,8 @@ public class LiquidManager : MonoBehaviour
 
 		_renderParams.matProps.SetFloat("SpeckRadius", _speckDiameter);
 
+		// Clear the buffers
+		_computeShader.Dispatch(_clearBuffersIdx, Mathf.CeilToInt((float)_numParts / 256), 1, 1);
 		_computeShader.Dispatch(_populatePartitionsIdx, Mathf.CeilToInt((float)_numSpecks / 256), 1, 1);
 
 		SumPartCounts();
