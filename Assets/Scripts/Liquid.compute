@@ -8,6 +8,8 @@ RWStructuredBuffer<Speck> Specks;
 RWStructuredBuffer<Speck> SortedSpecks;
 RWStructuredBuffer<uint> PartCounts;
 RWStructuredBuffer<uint2> PartIndices;
+RWStructuredBuffer<int> PartIndicesX;
+RWStructuredBuffer<int> PartIndicesY;
 
 RWStructuredBuffer<uint> PfxSumA;
 RWStructuredBuffer<uint> PfxSumB;
@@ -101,25 +103,12 @@ void UpdateVelocities (uint3 id : SV_DispatchThreadID)
 	int yMid = (partIdx / PartsPerDim) % PartsPerDim;
 	int zMid = (partIdx / partsPerPlane);
 
-	float3 debugPos = float3(0,0,0);
-
 	for	(int z = zMid - 1; z <= zMid + 1; z++)
 	{
-		if (z < 0)
-			continue;
-
 		for	(int y = yMid - 1; y <= yMid + 1; y++)
 		{
-			if (y < 0)
-				continue;
-
 			for	(int x = xMid - 1; x <= xMid + 1; x++)
 			{
-				if (x < 0)
-					continue;
-
-				debugPos = thisSpeck.Pos;
-
 				uint partIdx = (partsPerPlane * z) + (PartsPerDim * y) + x;
 				uint partStart = PfxSumB[partIdx] - PartCounts[partIdx];
 				uint partEnd = PfxSumB[partIdx];
@@ -216,6 +205,8 @@ void SumPartCounts (uint id : SV_DispatchThreadID)
 void ClearBuffers (uint id : SV_DispatchThreadID)
 {
 	PartCounts[id.x] = 0;
+	PfxSumA[id.x] = 0;
+	PfxSumB[id.x] = 0;
 }
 
 #pragma kernel SortSpecks

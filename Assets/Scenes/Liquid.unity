@@ -246,9 +246,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b664ad1576b309b4b94471133c43f4b9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _numSpecks: 20000
+  _numSpecks: 400000
   _speckDiameter: 0.2
-  _bounds: 3.37
+  _bounds: 30
   _boundsForce: 1
   _maxVel: 3
   _maxDist: 0.5
