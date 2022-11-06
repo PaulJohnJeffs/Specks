@@ -246,10 +246,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b664ad1576b309b4b94471133c43f4b9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _numSpecks: 60000
-  _speckRadius: 0.1
-  _bounds: 5
+  _numSpecks: 1000
+  _speckRadius: 0.2
+  _bounds: 2
   _boundsForce: 1
+  _maxVel: 10
+  _maxDist: 1
   _config: {fileID: 11400000, guid: c1140c5bd97c7744abe185349c3f5c14, type: 2}
   _computeShader: {fileID: 7200000, guid: aab02e0c3330b1b478de1e0b8cf00277, type: 3}
   _speckMat: {fileID: 2100000, guid: 30aa97ce1c02dd6478b55710d0f05376, type: 2}

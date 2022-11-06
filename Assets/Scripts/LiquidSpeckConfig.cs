@@ -7,6 +7,7 @@ public class LiquidSpeckConfig : ScriptableObject
 {
 	public float RepulsionA;
 	public float RepulsionB;
+	public float RepulsionF;
 
 	public float AttractionC;
 	public float AttractionD;

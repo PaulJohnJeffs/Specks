@@ -21,6 +21,10 @@ public class LiquidManager : MonoBehaviour
 	[SerializeField]
 	private float _boundsForce = 5f;
 	[SerializeField]
+	private float _maxVel;
+	[SerializeField]
+	private float _maxDist;
+	[SerializeField]
 	private LiquidSpeckConfig _config;
 	[SerializeField]
 	private ComputeShader _computeShader;
@@ -44,7 +48,7 @@ public class LiquidManager : MonoBehaviour
 		Speck[] speckDatas = new Speck[_numSpecks];
 		for (int i = 0; i < _numSpecks; i++)
 		{
-			Vector3 pos = new Vector3(Random.value - 0.5f, Random.value, Random.value - 0.5f) * _bounds;
+			Vector3 pos = new Vector3(Random.value - 0.5f, Random.value - 0.5f, Random.value - 0.5f) * _bounds;
 			Speck speck = new Speck()
 			{
 				Pos = pos,
@@ -75,11 +79,15 @@ public class LiquidManager : MonoBehaviour
 		_computeShader.SetFloat("C", _config.AttractionC);
 		_computeShader.SetFloat("D", _config.AttractionD);
 		_computeShader.SetFloat("E", _config.AttractionE);
+		_computeShader.SetFloat("F", _config.RepulsionF);
+		_computeShader.SetFloat("Multiplier", _config.Multiplier);
 
 		_computeShader.SetInt("NumSpecks", _numSpecks);
 		_computeShader.SetFloat("SpeckRadius", _speckRadius);
 		_computeShader.SetFloat("Damper", _config.Damper);
 		_computeShader.SetFloat("Bounds", _bounds);
+		_computeShader.SetFloat("MaxVel", _maxVel);
+		_computeShader.SetFloat("MaxDist", _maxDist);
 		_computeShader.SetFloat("BoundsForce", _boundsForce);
 		_computeShader.SetFloat("DeltaTime", Time.deltaTime);
 		_computeShader.SetVector("Gravity", Physics.gravity);

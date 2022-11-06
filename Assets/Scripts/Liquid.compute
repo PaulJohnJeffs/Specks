@@ -12,12 +12,16 @@ float B;
 float C;
 float D;
 float E;
+float F;
 
 uint NumSpecks;
 float SpeckRadius;
 float Damper;
+float MaxVel;
+float MaxDist;
 float Bounds;
 float BoundsForce;
+float Multiplier;
 float DeltaTime;
 
 float3 Gravity;
@@ -29,7 +33,7 @@ float Attraction(float x)
 
 float Repulsion(float x)
 {
-	return A * exp(-x / B);
+	return A * exp((x + F) / -B);
 }
 
 float3 ProjectOnPlane(float3 vec, float3 normal)
@@ -48,7 +52,13 @@ void ClampInBounds(float3 axis, uint id)
 	{
 		float3 position = Specks[id].Pos;
 		Specks[id].Pos = ProjectOnPlane(position, axis) + (axis * (Bounds / 2) * s);
-		Specks[id].Vel = ProjectOnPlane(Specks[id].Vel, axis);
+
+		if (s * dot(Specks[id].Vel, axis) > 0)
+		{
+			Specks[id].Vel = ProjectOnPlane(Specks[id].Vel, axis);
+		}
+
+		//Specks[id].Pos *= 0.99;
 	}
 }
 
@@ -60,58 +70,35 @@ void UpdateVelocities (uint3 id : SV_DispatchThreadID)
 	Speck thisSpeck = Specks[id.x];
 	for (uint i = 0; i < NumSpecks; i++)
 	{
-		if (id.x == i)
+		Speck otherSpeck = Specks[i];
+
+		if (id.x == i || distance(thisSpeck.Pos, otherSpeck.Pos) > MaxDist)
 			continue;
 
-		Speck otherSpeck = Specks[i];
-		float x = max(0, distance(thisSpeck.Pos, otherSpeck.Pos) - SpeckRadius);
+		//float x = max(0, distance(thisSpeck.Pos, otherSpeck.Pos);// - SpeckRadius);
+		float x = distance(thisSpeck.Pos, otherSpeck.Pos);// - SpeckRadius);
 		float forceMag = Attraction(x) - Repulsion(x);
-		float3 displacement = normalize(otherSpeck.Pos - thisSpeck.Pos);
+		float3 toOther = normalize(otherSpeck.Pos - thisSpeck.Pos);
 
 		if (distance(thisSpeck.Pos, otherSpeck.Pos) == 0)
 		{
-			displacement = float3(0, id.x < i, 0);
+			toOther = normalize(thisSpeck.Pos) * (-1 * (id.x < i));
 		}
 
-		force += forceMag * displacement;
+		force += forceMag * toOther;
 	}
 
-	force += Repulsion(max(0, Specks[id.x].Pos.y)) * float3(0, BoundsForce, 0);
-	
-	float3 p = Specks[id.x].Pos;
-	if (p.x < -Bounds / 2)
-	{
-		float k = p.x + (Bounds / 2);
-		k = max(0, k);
-		force += float3(BoundsForce, 0, 0) * Repulsion(k);
-	}
-	else if (p.x > Bounds / 2)
-	{
-		float k = (Bounds / 2) - p.x;
-		k = max(0, k);
-		force += float3(-BoundsForce, 0, 0) * Repulsion(k);
-	}
-
-	if (p.z < -Bounds / 2)
-	{
-		float k = p.z + (Bounds / 2);
-		k = max(0, k);
-		force += float3(0, 0, BoundsForce) * Repulsion(k);
-		//Specks[id.x].Vel.z *= -0.5;
-	}
-	else if (p.z > Bounds / 2)
-	{
-		float k = (Bounds / 2) - p.z;
-		k = max(0, k);
-		force += float3(0, 0, -BoundsForce) * Repulsion(k);
-	}
-
-	float3 a = force + Gravity;
+	float3 a = (force * Multiplier) + Gravity;
 	Specks[id.x].Vel += a * DeltaTime;
 	Specks[id.x].Vel *= 1 - Damper;
-	if (isnan(length(Specks[id.x].Vel)))
+	//if (isnan(length(Specks[id.x].Vel)))
+	//{
+	//	Specks[id.x].Vel = float3(0, 0, 0);
+	//}
+
+	if (length(Specks[id.x].Vel) > MaxVel)
 	{
-		Specks[id.x].Vel = float3(0, 0, 0);
+		Specks[id.x].Vel = normalize(Specks[id.x].Vel) * MaxVel;
 	}
 }
 
@@ -120,6 +107,41 @@ void UpdateVelocities (uint3 id : SV_DispatchThreadID)
 void UpdatePositions (uint3 id : SV_DispatchThreadID)
 {
 	Specks[id.x].Pos += Specks[id.x].Vel * DeltaTime;
+	//
+	//float3 p = Specks[id.x].Pos;
+
+	//if (p.y < 0)
+	//{
+	//	Specks[id.x].Pos.y = 0;
+	//	Specks[id.x].Vel.y = max(0, Specks[id.x].Vel.y);
+	//}
+
+	//if (p.x < -Bounds / 2)
+	//{
+	//	float k = p.x + (Bounds / 2);
+	//	k = max(0, k);
+	//	force += float3(BoundsForce, 0, 0) * Repulsion(k);
+	//}
+	//else if (p.x > Bounds / 2)
+	//{
+	//	float k = (Bounds / 2) - p.x;
+	//	k = max(0, k);
+	//	force += float3(-BoundsForce, 0, 0) * Repulsion(k);
+	//}
+
+	//if (p.z < -Bounds / 2)
+	//{
+	//	float k = p.z + (Bounds / 2);
+	//	k = max(0, k);
+	//	force += float3(0, 0, BoundsForce) * Repulsion(k);
+	//	//Specks[id.x].Vel.z *= -0.5;
+	//}
+	//else if (p.z > Bounds / 2)
+	//{
+	//	float k = (Bounds / 2) - p.z;
+	//	k = max(0, k);
+	//	force += float3(0, 0, -BoundsForce) * Repulsion(k);
+	//}
 
 	//if (Specks[id.x].Pos.y <= 0)
 	//{
@@ -127,6 +149,7 @@ void UpdatePositions (uint3 id : SV_DispatchThreadID)
 	//	Specks[id.x].Vel.y = 0;
 	//}
 
-	//ClampInBounds(float3(1, 0, 0), id.x);
-	//ClampInBounds(float3(0, 0, 1), id.x);
+	ClampInBounds(float3(1, 0, 0), id.x);
+	ClampInBounds(float3(0, 1, 0), id.x);
+	ClampInBounds(float3(0, 0, 1), id.x);
 }
