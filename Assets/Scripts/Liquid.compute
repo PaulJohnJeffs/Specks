@@ -193,7 +193,7 @@ void SumPartCounts (uint id : SV_DispatchThreadID)
 [numthreads(256, 1, 1)]
 void ClearBuffers (uint id : SV_DispatchThreadID)
 {
-	PartCounts[id.x] == 0;
+	PartCounts[id.x] = 0;
 }
 
 #pragma kernel SortSpecks
