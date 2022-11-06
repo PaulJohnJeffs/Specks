@@ -76,7 +76,7 @@ Shader "Unlit/Liquid"
 
             fixed4 frag (v2f i) : SV_Target
             {
-				float2 radVec = i.uv - float2(0, 0.5);
+				float2 radVec = i.uv;// - float2(0, 0.5);
 				float rad = length(radVec);
 
 				clip((rad > 0.3) * -1);

@@ -56,9 +56,9 @@ public class LiquidManager : MonoBehaviour
 	{
 		Vector3[] verts = new Vector3[]
 		{
-			new Vector3(-2f, 0, 0),
-			new Vector3(2f, 0, 0),
-			new Vector3(0, 2, 0),
+			new Vector3(-2f, -1, 0),
+			new Vector3(2f, -1, 0),
+			new Vector3(0, 1, 0),
 		};
 
 		int[] tris = new int[] { 0, 1, 2 };
