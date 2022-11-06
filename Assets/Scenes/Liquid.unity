@@ -247,7 +247,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _numSpecks: 1000
-  _speckRadius: 0.2
+  _speckDiameter: 0.2
   _bounds: 2
   _boundsForce: 1
   _maxVel: 10

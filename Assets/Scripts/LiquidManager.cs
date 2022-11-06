@@ -15,7 +15,7 @@ public class LiquidManager : MonoBehaviour
 	[SerializeField]
 	private int _numSpecks;
 	[SerializeField]
-	private float _speckRadius = 0.1f;
+	private float _speckDiameter = 0.1f;
 	[SerializeField]
 	private float _bounds = 1f;
 	[SerializeField]
@@ -46,9 +46,14 @@ public class LiquidManager : MonoBehaviour
 		//_sortedSpeckCB = new ComputeBuffer(_numSpecks, SPECK_DATA_SIZE);
 
 		Speck[] speckDatas = new Speck[_numSpecks];
+		int numPerDim = Mathf.FloorToInt(_bounds / _speckDiameter);
 		for (int i = 0; i < _numSpecks; i++)
 		{
-			Vector3 pos = new Vector3(Random.value - 0.5f, Random.value - 0.5f, Random.value - 0.5f) * _bounds;
+			float x = (i % numPerDim) * _speckDiameter + (_speckDiameter / 2f);
+			float y = ((i / numPerDim) % numPerDim) * _speckDiameter + (_speckDiameter / 2f);
+			float z = (i / (numPerDim * numPerDim)) * _speckDiameter + (_speckDiameter / 2f);
+			//Vector3 pos = new Vector3(Random.value - 0.5f, Random.value - 0.5f, Random.value - 0.5f) * _bounds;
+			Vector3 pos = new Vector3(x, y, z) - (new Vector3(1, 1, 1) * (_bounds / 2));
 			Speck speck = new Speck()
 			{
 				Pos = pos,
@@ -83,7 +88,7 @@ public class LiquidManager : MonoBehaviour
 		_computeShader.SetFloat("Multiplier", _config.Multiplier);
 
 		_computeShader.SetInt("NumSpecks", _numSpecks);
-		_computeShader.SetFloat("SpeckRadius", _speckRadius);
+		_computeShader.SetFloat("SpeckRadius", _speckDiameter);
 		_computeShader.SetFloat("Damper", _config.Damper);
 		_computeShader.SetFloat("Bounds", _bounds);
 		_computeShader.SetFloat("MaxVel", _maxVel);
@@ -92,7 +97,7 @@ public class LiquidManager : MonoBehaviour
 		_computeShader.SetFloat("DeltaTime", Time.deltaTime);
 		_computeShader.SetVector("Gravity", Physics.gravity);
 
-		_renderParams.matProps.SetFloat("SpeckRadius", _speckRadius);
+		_renderParams.matProps.SetFloat("SpeckRadius", _speckDiameter);
 
 		_computeShader.Dispatch(_updateVelocitiesIdx, Mathf.CeilToInt((float)_numSpecks / 256), 1, 1);
 		_computeShader.Dispatch(_updatePositionsIdx, Mathf.CeilToInt((float)_numSpecks / 256), 1, 1);
