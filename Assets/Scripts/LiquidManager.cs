@@ -52,8 +52,28 @@ public class LiquidManager : MonoBehaviour
 	private int _partsPerDim;
 	private int _numParts;
 
+	private void SetTriangleMesh()
+	{
+		Vector3[] verts = new Vector3[]
+		{
+			new Vector3(-2f, 0, 0),
+			new Vector3(2f, 0, 0),
+			new Vector3(0, 2, 0),
+		};
+
+		int[] tris = new int[] { 0, 1, 2 };
+
+		_speckMesh = new Mesh()
+		{
+			vertices = verts,
+			triangles = tris,
+		};
+	}
+
     void Start()
     {
+		SetTriangleMesh();
+
 		_partsPerDim = Mathf.CeilToInt(_bounds / _maxDist);
 		_numParts = _partsPerDim * _partsPerDim * _partsPerDim;
 		_bounds = _partsPerDim * _maxDist;
