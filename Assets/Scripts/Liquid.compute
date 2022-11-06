@@ -208,7 +208,7 @@ void SumPartCounts (uint id : SV_DispatchThreadID)
 	if (id.x >= NumParts)
 		return;
 
-	PfxSumB[id.x] = PfxSumA[id.x] + ((id.x < PfxSumPower) * PfxSumA[id.x - PfxSumPower]);
+	PfxSumB[id.x] = PfxSumA[id.x] + ((id.x >= PfxSumPower) * PfxSumA[id.x - PfxSumPower]);
 }
 
 #pragma kernel ClearBuffers
@@ -224,7 +224,7 @@ void SortSpecks (uint id : SV_DispatchThreadID)
 {
 	int partIdx = PartIndices[id.x].x;
 	int subPartIdx = PartIndices[id.x].y;
-	int partOffset = PfxSumB[partIdx];
+	int partOffset = PfxSumB[partIdx] - PartCounts[partIdx];
 
 	int globalIdx = partOffset + subPartIdx;
 	SortedSpecks[globalIdx] = Specks[id.x];
