@@ -176,7 +176,7 @@ void PopulatePartitions (uint id : SV_DispatchThreadID)
 {
 	uint partIdx = GetPartitionIdx(Specks[id.x].Pos);
 	PartIndices[id.x].x = partIdx;
-	InterlockedAdd(PartCounts[id.x], 1, PartIndices[id.x].y);
+	InterlockedAdd(PartCounts[partIdx], 1, PartIndices[id.x].y);
 }
 
 #pragma kernel SumPartCounts
