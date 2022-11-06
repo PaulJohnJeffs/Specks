@@ -193,6 +193,9 @@ void UpdatePositions (uint3 id : SV_DispatchThreadID)
 [numthreads(256, 1, 1)]
 void PopulatePartitions (uint id : SV_DispatchThreadID)
 {
+	if (id.x >= NumSpecks)
+		return;
+
 	uint partIdx = GetPartitionIdx(Specks[id.x].Pos);
 	PartIndices[id.x].x = partIdx;
 	InterlockedAdd(PartCounts[partIdx], 1, PartIndices[id.x].y);
@@ -202,7 +205,7 @@ void PopulatePartitions (uint id : SV_DispatchThreadID)
 [numthreads(256, 1, 1)]
 void SumPartCounts (uint id : SV_DispatchThreadID)
 {
-	if (id.x > NumParts)
+	if (id.x >= NumParts)
 		return;
 
 	PfxSumB[id.x] = PfxSumA[id.x] + ((id.x < PfxSumPower) * PfxSumA[id.x - PfxSumPower]);
