@@ -50,8 +50,8 @@ public class LiquidManager : MonoBehaviour
 		for (int i = 0; i < _numSpecks; i++)
 		{
 			float x = (i % numPerDim) * _speckDiameter + (_speckDiameter / 2f);
-			float y = ((i / numPerDim) % numPerDim) * _speckDiameter + (_speckDiameter / 2f);
-			float z = (i / (numPerDim * numPerDim)) * _speckDiameter + (_speckDiameter / 2f);
+			float z = ((i / numPerDim) % numPerDim) * _speckDiameter + (_speckDiameter / 2f);
+			float y = (i / (numPerDim * numPerDim)) * _speckDiameter + (_speckDiameter / 2f);
 			//Vector3 pos = new Vector3(Random.value - 0.5f, Random.value - 0.5f, Random.value - 0.5f) * _bounds;
 			Vector3 pos = new Vector3(x, y, z) - (new Vector3(1, 1, 1) * (_bounds / 2));
 			Speck speck = new Speck()
