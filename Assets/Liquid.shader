@@ -74,8 +74,6 @@ Shader "Unlit/Liquid"
 				float3 rgb = float3(x, y, z) / PartsPerDim;
 
 				return float4(rgb, 1);
-
-                //return _col;
             }
             ENDCG
         }

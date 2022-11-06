@@ -136,27 +136,6 @@ void UpdateVelocities (uint3 id : SV_DispatchThreadID)
 		}
 	}
 
-	//Specks[id.x].Pos = debugPos;
-
-	//for (uint i = 0; i < NumSpecks; i++)
-	//{
-	//	Speck otherSpeck = Specks[i];
-
-	//	if (id.x == i || distance(thisSpeck.Pos, otherSpeck.Pos) > MaxDist)
-	//		continue;
-
-	//	float x = distance(thisSpeck.Pos, otherSpeck.Pos);
-	//	float forceMag = Attraction(x) - Repulsion(x);
-	//	float3 toOther = normalize(otherSpeck.Pos - thisSpeck.Pos);
-
-	//	if (distance(thisSpeck.Pos, otherSpeck.Pos) == 0)
-	//	{
-	//		toOther = normalize(thisSpeck.Pos) * (-1 * (id.x < i));
-	//	}
-
-	//	//force += forceMag * toOther;
-	//}
-
 	float3 a = (force * Multiplier) + Gravity;
 	Specks[id.x].Vel += a * DeltaTime;
 	Specks[id.x].Vel *= 1 - Damper;

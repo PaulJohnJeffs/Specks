@@ -42,9 +42,6 @@ public class LiquidManager : MonoBehaviour
 	private ComputeBuffer _pfxSumBCB;
 	private RenderParams _renderParams;
 
-	private ComputeBuffer _partIndicesXCB;
-	private ComputeBuffer _partIndicesYCB;
-
 	private int _updateVelocitiesIdx;
 	private int _updatePositionsIdx;
 	private int _populatePartitionsIdx;
@@ -70,9 +67,6 @@ public class LiquidManager : MonoBehaviour
 		_pfxSumACB = new ComputeBuffer(_numParts, sizeof(uint));
 		_pfxSumBCB = new ComputeBuffer(_numParts, sizeof(uint));
 
-		_partIndicesXCB = new ComputeBuffer(_numSpecks, sizeof(uint));
-		_partIndicesYCB = new ComputeBuffer(_numSpecks, sizeof(uint));
-
 		Speck[] speckDatas = new Speck[_numSpecks];
 		int numPerDim = Mathf.FloorToInt(_bounds / _speckDiameter);
 		for (int i = 0; i < _numSpecks; i++)
@@ -96,7 +90,6 @@ public class LiquidManager : MonoBehaviour
 		_computeShader.SetBuffer(_updateVelocitiesIdx, "Specks", _speckCB);
 		_computeShader.SetBuffer(_updateVelocitiesIdx, "SortedSpecks", _sortedSpeckCB);
 		_computeShader.SetBuffer(_updateVelocitiesIdx, "PartIndices", _partIndicesCB);
-		_computeShader.SetBuffer(_updateVelocitiesIdx, "PartIndicesX", _partIndicesXCB);
 		_computeShader.SetBuffer(_updateVelocitiesIdx, "PartCounts", _partCountsCB);
 
 		_updatePositionsIdx = _computeShader.FindKernel("UpdatePositions");
@@ -109,9 +102,6 @@ public class LiquidManager : MonoBehaviour
 		_computeShader.SetBuffer(_populatePartitionsIdx, "Specks", _speckCB);
 		_computeShader.SetBuffer(_populatePartitionsIdx, "PartIndices", _partIndicesCB);
 		_computeShader.SetBuffer(_populatePartitionsIdx, "PartCounts", _partCountsCB);
-
-		_computeShader.SetBuffer(_populatePartitionsIdx, "PartIndicesX", _partIndicesXCB);
-		_computeShader.SetBuffer(_populatePartitionsIdx, "PartIndicesY", _partIndicesYCB);
 
 		_sumPartCountsIdx = _computeShader.FindKernel("SumPartCounts");
 
@@ -180,30 +170,11 @@ public class LiquidManager : MonoBehaviour
 
 		// Clear the buffers
 		_computeShader.Dispatch(_clearBuffersIdx, Mathf.CeilToInt((float)_numParts / 256), 1, 1);
-		//uint[] partCounts = new uint[_numParts];
-		//_partCountsCB.GetData(partCounts);
-
 		_computeShader.Dispatch(_populatePartitionsIdx, Mathf.CeilToInt((float)_numSpecks / 256), 1, 1);
-		//uint[] partIndicesX = new uint[_numSpecks];
-		//uint[] partIndicesY = new uint[_numSpecks];
-		//_partIndicesXCB.GetData(partIndicesX);
-		//_partIndicesYCB.GetData(partIndicesY);
-
-		//_partCountsCB.GetData(partCounts);
 
 		SumPartCounts();
-		//uint[] pfxSumB = new uint[_numParts];
-		//uint[] pfxSumA = new uint[_numParts];
-		//_pfxSumBCB.GetData(pfxSumB);
-		//_pfxSumACB.GetData(pfxSumA);
-		
-		//_partCountsCB.GetData(partCounts);
 
 		_computeShader.Dispatch(_sortSpecksIdx, Mathf.CeilToInt((float)_numSpecks / 256), 1, 1);
-
-		//Speck[] sorted = new Speck[_numSpecks];
-		//_sortedSpeckCB.GetData(sorted);
-
 		_computeShader.Dispatch(_updateVelocitiesIdx, Mathf.CeilToInt((float)_numSpecks / 256), 1, 1);
 		_computeShader.Dispatch(_updatePositionsIdx, Mathf.CeilToInt((float)_numSpecks / 256), 1, 1);
 
@@ -218,8 +189,5 @@ public class LiquidManager : MonoBehaviour
 		_partCountsCB.Release();
 		_pfxSumACB.Release();
 		_pfxSumBCB.Release();
-
-		_partIndicesXCB.Release();
-		_partIndicesYCB.Release();
 	}
 }
