@@ -167,7 +167,7 @@ void UpdatePositions (uint3 id : SV_DispatchThreadID)
 [numthreads(256, 1, 1)]
 void InitialisePfxSum (uint id : SV_DispatchThreadID)
 {
-	if (id.x >= NumSpecks)
+	if (id.x >= NumParts)
 		return;
 
 	PfxSumA[id.x] = PartCounts[id.x];
