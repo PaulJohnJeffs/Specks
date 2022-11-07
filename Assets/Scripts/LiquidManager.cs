@@ -122,6 +122,7 @@ public class LiquidManager : MonoBehaviour
 		_computeShader.SetBuffer(_populatePartitionsIdx, "Specks", _speckCB);
 		_computeShader.SetBuffer(_populatePartitionsIdx, "PartIndices", _partIndicesCB);
 		_computeShader.SetBuffer(_populatePartitionsIdx, "PartCounts", _partCountsCB);
+		_computeShader.SetBuffer(_populatePartitionsIdx, "PfxSumA", _pfxSumACB);
 
 		_sumPartCountsIdx = _computeShader.FindKernel("SumPartCounts");
 
@@ -147,7 +148,7 @@ public class LiquidManager : MonoBehaviour
 	private void SumPartCounts()
 	{
 		// Set prefix sum buffers
-		_computeShader.SetBuffer(_sumPartCountsIdx, "PfxSumA", _partCountsCB);
+		_computeShader.SetBuffer(_sumPartCountsIdx, "PfxSumA", _pfxSumACB);
 		_computeShader.SetBuffer(_sumPartCountsIdx, "PfxSumB", _pfxSumBCB);
 
 		int i = 0;
