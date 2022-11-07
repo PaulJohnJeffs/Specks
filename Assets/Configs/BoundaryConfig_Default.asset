@@ -9,15 +9,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 12fed203cf2b02a40ab51688c3f4522a, type: 3}
-  m_Name: Spaced Out
+  m_Script: {fileID: 11500000, guid: 2ab62d0e254ce5f42a6e4b279fd5ad84, type: 3}
+  m_Name: BoundaryConfig_Default
   m_EditorClassIdentifier: 
-  RepulsionA: 20
-  RepulsionB: 1
-  RepulsionF: 0
-  AttractionC: 2
-  AttractionD: 3.5
-  AttractionE: 0
-  Multiplier: 0.5
-  Mass: 1
-  Damper: 0
+  K: 0.1
+  Phase: 0
+  Amplitude: 0.2
+  Wavelength: 0.2

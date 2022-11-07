@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 12fed203cf2b02a40ab51688c3f4522a, type: 3}
-  m_Name: Liquid Speck Config
+  m_Name: SpeckConfig_Default
   m_EditorClassIdentifier: 
   RepulsionA: 20
   RepulsionB: 0.022
@@ -20,4 +20,4 @@ MonoBehaviour:
   AttractionE: 0.038
   Multiplier: 10
   Mass: 1
-  Damper: 0.236
+  Damper: 0.2

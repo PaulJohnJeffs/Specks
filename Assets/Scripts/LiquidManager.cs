@@ -27,6 +27,8 @@ public class LiquidManager : MonoBehaviour
 	[SerializeField]
 	private LiquidSpeckConfig _config;
 	[SerializeField]
+	private BoundaryConfig _boundaryConfig;
+	[SerializeField]
 	private ComputeShader _computeShader;
 
 	[SerializeField]
@@ -176,6 +178,11 @@ public class LiquidManager : MonoBehaviour
 		_computeShader.SetFloat("E", _config.AttractionE);
 		_computeShader.SetFloat("F", _config.RepulsionF);
 		_computeShader.SetFloat("Multiplier", _config.Multiplier);
+
+		_computeShader.SetFloat("K", _boundaryConfig.K);
+		_computeShader.SetFloat("Phase", _boundaryConfig.Phase);
+		_computeShader.SetFloat("Amplitude", _boundaryConfig.Amplitude);
+		_computeShader.SetFloat("Wavelength", _boundaryConfig.Wavelength);
 
 		_computeShader.SetInt("NumSpecks", _numSpecks);
 		_computeShader.SetFloat("SpeckRadius", _speckDiameter);

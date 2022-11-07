@@ -34,6 +34,12 @@ float BoundsForce;
 float Multiplier;
 float DeltaTime;
 
+// Boundary conditions
+float K;
+float Phase;
+float Amplitude;
+float Wavelength;
+
 float3 Gravity;
 
 float Attraction(float x)
@@ -81,6 +87,20 @@ uint GetPartitionIdx(float3 pos)
 {
 	uint3 coords = GetPartCoords(pos);
 	return coords.x + (coords.y * PartsPerDim) + (coords.z * PartsPerDim * PartsPerDim);
+}
+
+float3 CalculateBoundaryForce(float3 pos)
+{
+	float limit = Bounds / 2;
+	float3 wave = sin((pos + Phase) / Wavelength) * Amplitude;
+
+	float3 plusDist = abs(clamp(pos, -limit, limit) - limit) - wave;
+	float3 negDist = abs(clamp(pos, -limit, limit) + limit) - wave;
+
+	float3 pSq = plusDist * plusDist;
+	float3 nSq = negDist * negDist;
+
+	return (K / nSq) - (K / pSq);
 }
 
 #pragma kernel UpdateVelocities
@@ -140,6 +160,7 @@ void UpdateVelocities (uint3 id : SV_DispatchThreadID)
 	}
 
 	float3 a = (force * Multiplier) + Gravity;
+	a += CalculateBoundaryForce(Specks[id.x].Pos);
 	Specks[id.x].Vel += a * DeltaTime;
 	Specks[id.x].Vel *= 1 - Damper;
 
@@ -157,10 +178,6 @@ void UpdatePositions (uint3 id : SV_DispatchThreadID)
 		return;
 
 	Specks[id.x].Pos += Specks[id.x].Vel * DeltaTime;
-	Specks[id.x].Pos = clamp(Specks[id.x].Pos, -Bounds / 2, Bounds / 2);
-	//ClampInBounds(float3(1, 0, 0), id.x);
-	//ClampInBounds(float3(0, 1, 0), id.x);
-	//ClampInBounds(float3(0, 0, 1), id.x);
 }
 
 #pragma kernel PopulatePartitions
