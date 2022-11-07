@@ -87,9 +87,6 @@ uint GetPartitionIdx(float3 pos)
 [numthreads(256, 1, 1)]
 void UpdateVelocities (uint3 id : SV_DispatchThreadID)
 {
-	if (id.x >= NumSpecks)
-		return;
-
 	float3 force = float3(0, 0, 0);
 	Speck thisSpeck = Specks[id.x];
 
@@ -153,25 +150,11 @@ void UpdateVelocities (uint3 id : SV_DispatchThreadID)
 [numthreads(256, 1, 1)]
 void UpdatePositions (uint3 id : SV_DispatchThreadID)
 {
-	if (id.x >= NumSpecks)
-		return;
-
 	Specks[id.x].Pos += Specks[id.x].Vel * DeltaTime;
 	Specks[id.x].Pos = clamp(Specks[id.x].Pos, -Bounds / 2, Bounds / 2);
 	//ClampInBounds(float3(1, 0, 0), id.x);
 	//ClampInBounds(float3(0, 1, 0), id.x);
 	//ClampInBounds(float3(0, 0, 1), id.x);
-}
-
-#pragma kernel InitialisePfxSum
-[numthreads(256, 1, 1)]
-void InitialisePfxSum (uint id : SV_DispatchThreadID)
-{
-	if (id.x >= NumParts)
-		return;
-
-	PfxSumA[id.x] = PartCounts[id.x];
-	PfxSumB[id.x] = PartCounts[id.x];
 }
 
 #pragma kernel PopulatePartitions
@@ -209,9 +192,6 @@ void ClearBuffers (uint id : SV_DispatchThreadID)
 [numthreads(256, 1, 1)]
 void SortSpecks (uint id : SV_DispatchThreadID)
 {
-	if (id.x >= NumSpecks)
-		return;
-
 	int partIdx = PartIndices[id.x].x;
 	int subPartIdx = PartIndices[id.x].y;
 	int partOffset = PfxSumB[partIdx] - PartCounts[partIdx];

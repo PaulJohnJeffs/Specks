@@ -45,7 +45,6 @@ public class LiquidManager : MonoBehaviour
 	private int _updateVelocitiesIdx;
 	private int _updatePositionsIdx;
 	private int _populatePartitionsIdx;
-	private int _initialisePfxSumIdx;
 	private int _sumPartCountsIdx;
 	private int _clearBuffersIdx;
 	private int _sortSpecksIdx;
@@ -126,11 +125,6 @@ public class LiquidManager : MonoBehaviour
 
 		_sumPartCountsIdx = _computeShader.FindKernel("SumPartCounts");
 
-		_initialisePfxSumIdx = _computeShader.FindKernel("InitialisePfxSum");
-		_computeShader.SetBuffer(_initialisePfxSumIdx, "PartCounts", _partCountsCB);
-		_computeShader.SetBuffer(_initialisePfxSumIdx, "PfxSumA", _pfxSumACB);
-		_computeShader.SetBuffer(_initialisePfxSumIdx, "PfxSumB", _pfxSumBCB);
-
 		_clearBuffersIdx = _computeShader.FindKernel("ClearBuffers");
 		_computeShader.SetBuffer(_clearBuffersIdx, "PartCounts", _partCountsCB);
 		_computeShader.SetBuffer(_clearBuffersIdx, "PfxSumA", _pfxSumACB);
@@ -152,27 +146,24 @@ public class LiquidManager : MonoBehaviour
 
 	private void SumPartCounts()
 	{
-		_computeShader.Dispatch(_initialisePfxSumIdx, Mathf.CeilToInt((float)_numParts / 256), 1, 1);
-
 		// Set prefix sum buffers
-		_computeShader.SetBuffer(_sumPartCountsIdx, "PfxSumA", _pfxSumACB);
+		_computeShader.SetBuffer(_sumPartCountsIdx, "PfxSumA", _partCountsCB);
 		_computeShader.SetBuffer(_sumPartCountsIdx, "PfxSumB", _pfxSumBCB);
 
-		bool originalOrder = false;
-		for (int n = 1; n < _numParts; n <<= 0)
+		int i = 0;
+		for (int n = 1; n < _numParts; i++)
 		{
 			_computeShader.SetInt("PfxSumPower", n);
 			_computeShader.Dispatch(_sumPartCountsIdx, Mathf.CeilToInt((float)_numParts / 256), 1, 1);
 
+			_computeShader.SetBuffer(_sumPartCountsIdx, "PfxSumA", (i & 1) == 0 ? _pfxSumBCB : _pfxSumACB);
+			_computeShader.SetBuffer(_sumPartCountsIdx, "PfxSumB", (i & 1) == 0 ? _pfxSumACB : _pfxSumBCB);
 
-			_computeShader.SetBuffer(_sumPartCountsIdx, "PfxSumA", originalOrder ? _pfxSumACB : _pfxSumBCB);
-			_computeShader.SetBuffer(_sumPartCountsIdx, "PfxSumB", originalOrder ? _pfxSumBCB : _pfxSumACB);
-
-			originalOrder = !originalOrder;
+			n <<= 1;
 		}
 
-		_computeShader.SetBuffer(_updateVelocitiesIdx, "PfxSumB", originalOrder ? _pfxSumBCB : _pfxSumACB);
-		_computeShader.SetBuffer(_sortSpecksIdx, "PfxSumB", originalOrder ? _pfxSumBCB : _pfxSumACB);
+		_computeShader.SetBuffer(_updateVelocitiesIdx, "PfxSumB", (i & 1) == 0 ? _pfxSumACB : _pfxSumBCB);
+		_computeShader.SetBuffer(_sortSpecksIdx, "PfxSumB", (i & 1) == 0 ? _pfxSumACB : _pfxSumBCB);
 	}
 
 	public void Update()
