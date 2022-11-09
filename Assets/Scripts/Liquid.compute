@@ -15,6 +15,7 @@ RWStructuredBuffer<uint> PfxSumA;
 RWStructuredBuffer<uint> PfxSumB;
 uint PfxSumPower;
 
+float K;
 float A;
 float B;
 float C;
@@ -35,10 +36,11 @@ float Multiplier;
 float DeltaTime;
 
 // Boundary conditions
-float K;
+float KBoundary;
 float Phase;
 float Amplitude;
 float Wavelength;
+float Restitution;
 
 float3 Gravity;
 
@@ -69,9 +71,12 @@ void ClampInBounds(float3 axis, uint id)
 		float3 position = Specks[id].Pos;
 		Specks[id].Pos = ProjectOnPlane(position, axis) + (axis * (Bounds / 2) * s);
 
-		if (s * dot(Specks[id].Vel, axis) > 0)
+		float velAlongAxis = dot(Specks[id].Vel, axis);
+		float sv = sign(velAlongAxis);
+
+		if (s * velAlongAxis > 0)
 		{
-			Specks[id].Vel = ProjectOnPlane(Specks[id].Vel, axis);
+			Specks[id].Vel = ProjectOnPlane(Specks[id].Vel, axis) + (axis * -velAlongAxis * Restitution);
 		}
 	}
 }
@@ -100,7 +105,7 @@ float3 CalculateBoundaryForce(float3 pos)
 	float3 pSq = plusDist * plusDist;
 	float3 nSq = negDist * negDist;
 
-	return (K / nSq) - (K / pSq);
+	return (KBoundary / nSq) - (KBoundary / pSq);
 }
 
 #pragma kernel UpdateVelocities
@@ -178,6 +183,9 @@ void UpdatePositions (uint3 id : SV_DispatchThreadID)
 		return;
 
 	Specks[id.x].Pos += Specks[id.x].Vel * DeltaTime;
+	ClampInBounds(float3(1, 0, 0), id.x);
+	ClampInBounds(float3(0, 1, 0), id.x);
+	ClampInBounds(float3(0, 0, 1), id.x);
 }
 
 #pragma kernel PopulatePartitions

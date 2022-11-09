@@ -12,7 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2ab62d0e254ce5f42a6e4b279fd5ad84, type: 3}
   m_Name: BoundaryConfig_Default
   m_EditorClassIdentifier: 
-  K: 0.1
+  K: 0.0001
   Phase: 0
   Amplitude: 0.2
   Wavelength: 0.2
+  Restitution: 1
