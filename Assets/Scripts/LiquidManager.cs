@@ -5,14 +5,13 @@ using UnityEngine;
 struct Speck
 {
 	public Vector3 Pos;
-	public Vector3 LastPos;
 	public Vector3 Vel;
 	public int D;
 }
 
 public class LiquidManager : MonoBehaviour
 {
-	private const int SPECK_DATA_SIZE = (sizeof(float) * 9) + sizeof(int);
+	private const int SPECK_DATA_SIZE = (sizeof(float) * 6) + sizeof(int);
 
 	[SerializeField]
 	private int _numSpecks;
@@ -105,7 +104,6 @@ public class LiquidManager : MonoBehaviour
 			Speck speck = new Speck()
 			{
 				Pos = pos,
-				LastPos = pos,
 				Vel = Vector3.zero,
 				D = 0,
 			};

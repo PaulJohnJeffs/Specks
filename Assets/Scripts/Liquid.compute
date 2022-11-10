@@ -1,7 +1,6 @@
 struct Speck
 {
 	float3 Pos;
-	float3 LastPos;
 	float3 Vel;
 	int D;
 };
@@ -199,7 +198,6 @@ void UpdatePositions (uint3 id : SV_DispatchThreadID)
 	if (id.x >= NumSpecks)
 		return;
 
-	Specks[id.x].LastPos = Specks[id.x].Pos;
 	Specks[id.x].Pos += Specks[id.x].Vel * DeltaTime;
 }
 

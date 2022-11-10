@@ -33,7 +33,6 @@ Shader "Unlit/Liquid"
 			struct Speck
 			{
 				float3 Pos;
-				float3 LastPos;
 				float3 Vel;
 				int D;
 			};
