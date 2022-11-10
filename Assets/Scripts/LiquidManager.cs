@@ -185,8 +185,6 @@ public class LiquidManager : MonoBehaviour
 		_computeShader.SetFloat("D", _electrostatConfig.D);
 		_computeShader.SetFloat("E", _electrostatConfig.E);
 		_computeShader.SetFloat("F", _electrostatConfig.F);
-		//_computeShader.SetFloat("E", _config.AttractionE);
-		//_computeShader.SetFloat("F", _config.RepulsionF);
 		_computeShader.SetFloat("Multiplier", _config.Multiplier);
 
 		_computeShader.SetFloat("KBoundary", _boundaryConfig.K);

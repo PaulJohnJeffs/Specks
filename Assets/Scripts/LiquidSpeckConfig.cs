@@ -14,7 +14,6 @@ public class LiquidSpeckConfig : ScriptableObject
 	public float AttractionE;
 
 	public float Multiplier;
-	public float Mass;
 	[Range(0, 1)]
 	public float Damper;
 }

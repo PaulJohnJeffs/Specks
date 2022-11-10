@@ -103,30 +103,11 @@ uint GetPartitionIdx(float3 pos)
 
 void CalculateBoundaryForce(int id)
 {
-	//float limit = Bounds / 2;
-	//float3 p0 = Specks[id].Pos;
-	//float3 p1 = Specks[id].LastPos;
-
-	//float3 plus0 = abs(p0 - limit);
-	//float3 plus1 = abs(p1 - limit);
-
-	//float min0 = abs(p0 + limit);
-	//float min1 = abs(p1 + limit);
-
-	//float3 plusForce = KBoundary * ( (1 / min(plus0, plus1)) - (1 / max(plus0, plus1)) );
-	//float3 minForce = KBoundary * ( (1 / min(min0, min1)) - (1 / max(min0, min1)) );
-
-	//return minForce - plusForce;
-
 	float3 pos = Specks[id].Pos;
 
 	float limit = Bounds / 2;
-	//float wave = sin((((pos.x + pos.z) / 2) + Phase) / Wavelength) * Amplitude;
-
-	//float3 plusDist = max((-pos + limit) - wave, 0.001);// - wave;
-	float3 plusDist = max((-pos + limit), 0.001);// - wave;
-	//float3 negDist = max((pos + limit) - wave, 0.001);// - wave;
-	float3 negDist = max((pos + limit), 0.001);// - wave;
+	float3 plusDist = max((-pos + limit), 0.001);
+	float3 negDist = max((pos + limit), 0.001);
 
 	float3 pSq = plusDist * plusDist;
 	float3 nSq = negDist * negDist;
@@ -137,9 +118,6 @@ void CalculateBoundaryForce(int id)
 	dv = clamp(dv, -maxDV, maxDV);
 	
 	Specks[id].Vel += dv;
-
-
-	//return (KBoundary / nSq) - (KBoundary / pSq);
 }
 
 #pragma kernel UpdateVelocities
@@ -203,21 +181,8 @@ void UpdateVelocities (uint3 id : SV_DispatchThreadID)
 	Specks[id.x].D = numNeighbours;
 
 	float3 a = (force * Multiplier) + Gravity;
-	//a += CalculateBoundaryForce(id.x);
-	//float3 velBefore = Specks[id.x].Vel;
 	Specks[id.x].Vel += a * DeltaTime;
 	CalculateBoundaryForce(id.x);
-	//float velDot = dot(velBefore, Specks[id.x].Vel);
-
-	//if (velDot < 0)
-	//{
-	//	// particle has changed direction as a result of a collision with another particle.
-	//	float magBefore = length(velBefore);
-	//	if (length(Specks[id.x].Vel) > magBefore)
-	//	{
-	//		Specks[id.x].Vel = normalize(Specks[id.x].Vel) * magBefore;
-	//	}
-	//}
 
 	Specks[id.x].Vel *= 1 - Damper;
 
@@ -236,10 +201,6 @@ void UpdatePositions (uint3 id : SV_DispatchThreadID)
 
 	Specks[id.x].LastPos = Specks[id.x].Pos;
 	Specks[id.x].Pos += Specks[id.x].Vel * DeltaTime;
-
-	//ClampInBounds(float3(1, 0, 0), id.x);
-	//ClampInBounds(float3(0, 1, 0), id.x);
-	//ClampInBounds(float3(0, 0, 1), id.x);
 }
 
 #pragma kernel PopulatePartitions
