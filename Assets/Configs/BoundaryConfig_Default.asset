@@ -16,4 +16,4 @@ MonoBehaviour:
   Phase: 0
   Amplitude: 0
   Wavelength: 0.02
-  Restitution: 0.2
+  Restitution: 0.1

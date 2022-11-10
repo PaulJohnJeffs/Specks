@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 struct Speck
@@ -19,8 +17,6 @@ public class LiquidManager : MonoBehaviour
 	private float _speckDiameter = 0.1f;
 	[SerializeField]
 	private float _bounds = 1f;
-	[SerializeField]
-	private float _boundsForce = 5f;
 	[SerializeField]
 	private float _maxVel;
 	[SerializeField]
@@ -84,7 +80,6 @@ public class LiquidManager : MonoBehaviour
 		_bounds = _partsPerDim * _maxDist;
 		_computeShader.SetInt("PartsPerDim", _partsPerDim);
 		_computeShader.SetInt("NumParts", _numParts);
-		_computeShader.SetFloat("FloatMin", float.MinValue);
 
 		_speckCB = new ComputeBuffer(_numSpecks, SPECK_DATA_SIZE);
 		_sortedSpeckCB = new ComputeBuffer(_numSpecks, SPECK_DATA_SIZE);
@@ -186,9 +181,6 @@ public class LiquidManager : MonoBehaviour
 		_computeShader.SetFloat("Multiplier", _config.Multiplier);
 
 		_computeShader.SetFloat("KBoundary", _boundaryConfig.K);
-		_computeShader.SetFloat("Phase", _boundaryConfig.Phase);
-		_computeShader.SetFloat("Amplitude", _boundaryConfig.Amplitude);
-		_computeShader.SetFloat("Wavelength", _boundaryConfig.Wavelength);
 		_computeShader.SetFloat("Restitution", _boundaryConfig.Restitution);
 
 		_computeShader.SetInt("NumSpecks", _numSpecks);
@@ -197,7 +189,6 @@ public class LiquidManager : MonoBehaviour
 		_computeShader.SetFloat("Bounds", _bounds);
 		_computeShader.SetFloat("MaxDist", _maxDist);
 		_computeShader.SetFloat("MaxVel", _maxVel);
-		_computeShader.SetFloat("BoundsForce", _boundsForce);
 		_computeShader.SetFloat("DeltaTime", Time.deltaTime);
 		_computeShader.SetVector("Gravity", Physics.gravity);
 
