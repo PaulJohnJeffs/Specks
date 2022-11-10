@@ -1,6 +1,7 @@
 struct Speck
 {
 	float3 Pos;
+	float3 LastPos;
 	float3 Vel;
 };
 
@@ -33,7 +34,9 @@ uint PartsPerDim;
 uint NumParts;
 float BoundsForce;
 float Multiplier;
+float LastDeltaTime;
 float DeltaTime;
+float FloatMin;
 
 // Boundary conditions
 float KBoundary;
@@ -46,12 +49,14 @@ float3 Gravity;
 
 float Attraction(float x)
 {
-	return C * exp((x + E) / -D);
+	float rt = (B * x) - C;
+	return (K * A) / (rt * rt);
 }
 
 float Repulsion(float x)
 {
-	return A * exp((x + F) / -B);
+	float rt = (F * x) - E;
+	return (K * D) / (rt * rt);
 }
 
 float3 ProjectOnPlane(float3 vec, float3 normal)
@@ -62,14 +67,15 @@ float3 ProjectOnPlane(float3 vec, float3 normal)
 void ClampInBounds(float3 axis, uint id)
 {
 	Speck speck = Specks[id];
-
-	float pos = dot(speck.Pos, axis);
-	float s = sign(pos);
-	float mag = abs(pos);
+	float3 pos = Specks[id].Pos;
+	float wave = sin((((pos.x + pos.z) / 2) + Phase) / Wavelength) * Amplitude;
+	
+	float posDot = dot(pos + float3(0, wave, 0), axis);
+	float s = sign(posDot);
+	float mag = abs(posDot);
 	if (mag > Bounds / 2)
 	{
-		float3 position = Specks[id].Pos;
-		Specks[id].Pos = ProjectOnPlane(position, axis) + (axis * (Bounds / 2) * s);
+		Specks[id].Pos = ProjectOnPlane(Specks[id].Pos, axis) + (axis * ((Bounds / 2) + float3(0, wave, 0)) * s);
 
 		float velAlongAxis = dot(Specks[id].Vel, axis);
 		float sv = sign(velAlongAxis);
@@ -94,13 +100,32 @@ uint GetPartitionIdx(float3 pos)
 	return coords.x + (coords.y * PartsPerDim) + (coords.z * PartsPerDim * PartsPerDim);
 }
 
-float3 CalculateBoundaryForce(float3 pos)
+float3 CalculateBoundaryForce(int id)
 {
-	float limit = Bounds / 2;
-	float3 wave = sin((pos + Phase) / Wavelength) * Amplitude;
+	//float limit = Bounds / 2;
+	//float3 p0 = Specks[id].Pos;
+	//float3 p1 = Specks[id].LastPos;
 
-	float3 plusDist = abs(clamp(pos, -limit, limit) - limit) - wave;
-	float3 negDist = abs(clamp(pos, -limit, limit) + limit) - wave;
+	//float3 plus0 = abs(p0 - limit);
+	//float3 plus1 = abs(p1 - limit);
+
+	//float min0 = abs(p0 + limit);
+	//float min1 = abs(p1 + limit);
+
+	//float3 plusForce = KBoundary * ( (1 / min(plus0, plus1)) - (1 / max(plus0, plus1)) );
+	//float3 minForce = KBoundary * ( (1 / min(min0, min1)) - (1 / max(min0, min1)) );
+
+	//return minForce - plusForce;
+
+	float3 pos = Specks[id].Pos;
+
+	float limit = Bounds / 2;
+	//float wave = sin((((pos.x + pos.z) / 2) + Phase) / Wavelength) * Amplitude;
+
+	//float3 plusDist = max((-pos + limit) - wave, 0.001);// - wave;
+	float3 plusDist = max((-pos + limit), 0.001);// - wave;
+	//float3 negDist = max((pos + limit) - wave, 0.001);// - wave;
+	float3 negDist = max((pos + limit), 0.001);// - wave;
 
 	float3 pSq = plusDist * plusDist;
 	float3 nSq = negDist * negDist;
@@ -165,8 +190,21 @@ void UpdateVelocities (uint3 id : SV_DispatchThreadID)
 	}
 
 	float3 a = (force * Multiplier) + Gravity;
-	a += CalculateBoundaryForce(Specks[id.x].Pos);
+	a += CalculateBoundaryForce(id.x);
+	float3 velBefore = Specks[id.x].Vel;
 	Specks[id.x].Vel += a * DeltaTime;
+	float velDot = dot(velBefore, Specks[id.x].Vel);
+
+	//if (velDot < 0)
+	//{
+	//	// particle has changed direction as a result of a collision with another particle.
+	//	float magBefore = length(velBefore);
+	//	if (length(Specks[id.x].Vel) > magBefore)
+	//	{
+	//		Specks[id.x].Vel = normalize(Specks[id.x].Vel) * magBefore;
+	//	}
+	//}
+
 	Specks[id.x].Vel *= 1 - Damper;
 
 	if (length(Specks[id.x].Vel) > MaxVel)
@@ -182,10 +220,12 @@ void UpdatePositions (uint3 id : SV_DispatchThreadID)
 	if (id.x >= NumSpecks)
 		return;
 
+	Specks[id.x].LastPos = Specks[id.x].Pos;
 	Specks[id.x].Pos += Specks[id.x].Vel * DeltaTime;
-	ClampInBounds(float3(1, 0, 0), id.x);
-	ClampInBounds(float3(0, 1, 0), id.x);
-	ClampInBounds(float3(0, 0, 1), id.x);
+
+	//ClampInBounds(float3(1, 0, 0), id.x);
+	//ClampInBounds(float3(0, 1, 0), id.x);
+	//ClampInBounds(float3(0, 0, 1), id.x);
 }
 
 #pragma kernel PopulatePartitions

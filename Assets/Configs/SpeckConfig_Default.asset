@@ -18,6 +18,6 @@ MonoBehaviour:
   AttractionC: 2.2
   AttractionD: 0.1
   AttractionE: 0.038
-  Multiplier: 10
+  Multiplier: 1
   Mass: 1
-  Damper: 0.2
+  Damper: 0.01

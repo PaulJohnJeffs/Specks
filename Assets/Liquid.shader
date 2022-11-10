@@ -4,6 +4,10 @@ Shader "Unlit/Liquid"
     {
 		_colA ("Colour A", Color) = (1, 1, 1, 1)
 		_colB ("Colour B", Color) = (1, 1, 1, 1)
+		_fog ("Fog", Color) = (1, 1, 1, 1)
+
+		_fogMaxDist ("Fog Max Dist", float) = 1000
+		_velMax ("Vel Max", float) = 10
     }
     SubShader
     {
@@ -14,6 +18,8 @@ Shader "Unlit/Liquid"
         Pass
         {
             CGPROGRAM
+//// Upgrade NOTE: excluded shader from DX11; has structs without semantics (struct v2f members distToCam,vel)
+//#pragma exclude_renderers d3d11
             #pragma vertex vert
             #pragma fragment frag
 			#pragma multi_compile_instancing
@@ -22,10 +28,14 @@ Shader "Unlit/Liquid"
 
 			float4 _colA;
 			float4 _colB;
+			float4 _fog;
+			float _fogMaxDist;
+			float _velMax;
 
 			struct Speck
 			{
 				float3 Pos;
+				float3 LastPos;
 				float3 Vel;
 			};
 
@@ -46,6 +56,8 @@ Shader "Unlit/Liquid"
                 float4 vertex : SV_POSITION;
 				float2 uv : TEXCOORD0;
 				uint instanceID : TEXCOORD1;
+				float distToCam : TEXCOORD2;
+				float vel : TEXCOORD3;
             };
 
             v2f vert (appdata v)
@@ -71,31 +83,42 @@ Shader "Unlit/Liquid"
 				o.vertex = mul(mvp, v.vertex);
 				o.instanceID = v.instanceID;
 				o.uv = v.vertex;
+				o.distToCam = length(_WorldSpaceCameraPos - Specks[v.instanceID].Pos);
+				o.vel = length(Specks[v.instanceID].Vel);
                 return o;
             }
 
             fixed4 frag (v2f i) : SV_Target
             {
+				//return float4(1, 0, 0, 0);
+				
+				//return lerp(float4(1, 0, 0, 0), _fog, i.distToCam / _fogMaxDist);
 				float2 radVec = i.uv;// - float2(0, 0.5);
 				float rad = length(radVec);
 
 				clip((rad > 0.3) * -1);
+				
+				float tVel = saturate(i.vel / _velMax);
+				float tFog = saturate(i.distToCam / _fogMaxDist);
 
-				float fresnel = rad / 0.3;
+				float4 speedCol = lerp(_colA, _colB, tVel);
+				return lerp(speedCol, _fog, i.distToCam / _fogMaxDist);
 
-				//return float4(rad / 10, 0, 0, 0);
+				//float fresnel = rad / 0.3;
 
-				uint idx = PartIndices[i.instanceID].x;
+				////return float4(rad / 10, 0, 0, 0);
 
-				uint x = idx % PartsPerDim;
-				uint y = (idx / PartsPerDim) % PartsPerDim;
-				uint z = (idx / (PartsPerDim * PartsPerDim));
+				//uint idx = PartIndices[i.instanceID].x;
 
-				float3 rgb = float3(x, y, z) / PartsPerDim;
+				//uint x = idx % PartsPerDim;
+				//uint y = (idx / PartsPerDim) % PartsPerDim;
+				//uint z = (idx / (PartsPerDim * PartsPerDim));
 
-				rgb.y += 0.3;
+				//float3 rgb = float3(x, y, z) / PartsPerDim;
 
-				return lerp(_colA, float4(rgb, 1), fresnel);
+				//rgb.y += 0.3;
+
+				//return lerp(_colA, float4(rgb, 1), fresnel);
 
 				//return float4(rgb, 1);
 				//

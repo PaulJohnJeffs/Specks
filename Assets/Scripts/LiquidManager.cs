@@ -5,12 +5,13 @@ using UnityEngine;
 struct Speck
 {
 	public Vector3 Pos;
+	public Vector3 LastPos;
 	public Vector3 Vel;
 }
 
 public class LiquidManager : MonoBehaviour
 {
-	private const int SPECK_DATA_SIZE = sizeof(float) * 6;
+	private const int SPECK_DATA_SIZE = sizeof(float) * 9;
 
 	[SerializeField]
 	private int _numSpecks;
@@ -28,6 +29,8 @@ public class LiquidManager : MonoBehaviour
 	private LiquidSpeckConfig _config;
 	[SerializeField]
 	private BoundaryConfig _boundaryConfig;
+	[SerializeField]
+	private ElectrostaticConfig _electrostatConfig;
 	[SerializeField]
 	private ComputeShader _computeShader;
 
@@ -81,6 +84,7 @@ public class LiquidManager : MonoBehaviour
 		_bounds = _partsPerDim * _maxDist;
 		_computeShader.SetInt("PartsPerDim", _partsPerDim);
 		_computeShader.SetInt("NumParts", _numParts);
+		_computeShader.SetFloat("FloatMin", float.MinValue);
 
 		_speckCB = new ComputeBuffer(_numSpecks, SPECK_DATA_SIZE);
 		_sortedSpeckCB = new ComputeBuffer(_numSpecks, SPECK_DATA_SIZE);
@@ -100,6 +104,7 @@ public class LiquidManager : MonoBehaviour
 			Speck speck = new Speck()
 			{
 				Pos = pos,
+				LastPos = pos,
 				Vel = Vector3.zero,
 			};
 
@@ -171,12 +176,15 @@ public class LiquidManager : MonoBehaviour
 
 	public void Update()
 	{
-		_computeShader.SetFloat("A", _config.RepulsionA);
-		_computeShader.SetFloat("B", _config.RepulsionB);
-		_computeShader.SetFloat("C", _config.AttractionC);
-		_computeShader.SetFloat("D", _config.AttractionD);
-		_computeShader.SetFloat("E", _config.AttractionE);
-		_computeShader.SetFloat("F", _config.RepulsionF);
+		_computeShader.SetFloat("K", _electrostatConfig.K);
+		_computeShader.SetFloat("A", _electrostatConfig.A);
+		_computeShader.SetFloat("B", _electrostatConfig.B);
+		_computeShader.SetFloat("C", _electrostatConfig.C);
+		_computeShader.SetFloat("D", _electrostatConfig.D);
+		_computeShader.SetFloat("E", _electrostatConfig.E);
+		_computeShader.SetFloat("F", _electrostatConfig.F);
+		//_computeShader.SetFloat("E", _config.AttractionE);
+		//_computeShader.SetFloat("F", _config.RepulsionF);
 		_computeShader.SetFloat("Multiplier", _config.Multiplier);
 
 		_computeShader.SetFloat("KBoundary", _boundaryConfig.K);
