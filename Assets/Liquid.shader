@@ -8,6 +8,7 @@ Shader "Unlit/Liquid"
 
 		_fogMaxDist ("Fog Max Dist", float) = 1000
 		_velMax ("Vel Max", float) = 10
+		_densityMax ("Density Max", int) = 50
     }
     SubShader
     {
@@ -31,12 +32,14 @@ Shader "Unlit/Liquid"
 			float4 _fog;
 			float _fogMaxDist;
 			float _velMax;
+			int _densityMax;
 
 			struct Speck
 			{
 				float3 Pos;
 				float3 LastPos;
 				float3 Vel;
+				int D;
 			};
 
 			StructuredBuffer<Speck> Specks;
@@ -58,6 +61,7 @@ Shader "Unlit/Liquid"
 				uint instanceID : TEXCOORD1;
 				float distToCam : TEXCOORD2;
 				float vel : TEXCOORD3;
+				int density : TEXCOORD4;
             };
 
             v2f vert (appdata v)
@@ -85,6 +89,7 @@ Shader "Unlit/Liquid"
 				o.uv = v.vertex;
 				o.distToCam = length(_WorldSpaceCameraPos - Specks[v.instanceID].Pos);
 				o.vel = length(Specks[v.instanceID].Vel);
+				o.density = Specks[v.instanceID].D;
                 return o;
             }
 
@@ -100,8 +105,10 @@ Shader "Unlit/Liquid"
 				
 				float tVel = saturate(i.vel / _velMax);
 				float tFog = saturate(i.distToCam / _fogMaxDist);
+				float tDensity = saturate((float)i.density / _densityMax);
 
 				float4 speedCol = lerp(_colA, _colB, tVel);
+				speedCol = lerp(speedCol, _colB, 1 - tDensity);
 				return lerp(speedCol, _fog, i.distToCam / _fogMaxDist);
 
 				//float fresnel = rad / 0.3;

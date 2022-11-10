@@ -3,6 +3,7 @@ struct Speck
 	float3 Pos;
 	float3 LastPos;
 	float3 Vel;
+	int D;
 };
 
 RWStructuredBuffer<Speck> Specks;
@@ -100,7 +101,7 @@ uint GetPartitionIdx(float3 pos)
 	return coords.x + (coords.y * PartsPerDim) + (coords.z * PartsPerDim * PartsPerDim);
 }
 
-float3 CalculateBoundaryForce(int id)
+void CalculateBoundaryForce(int id)
 {
 	//float limit = Bounds / 2;
 	//float3 p0 = Specks[id].Pos;
@@ -130,7 +131,15 @@ float3 CalculateBoundaryForce(int id)
 	float3 pSq = plusDist * plusDist;
 	float3 nSq = negDist * negDist;
 
-	return (KBoundary / nSq) - (KBoundary / pSq);
+	float3 a = (KBoundary / nSq) - (KBoundary / pSq);
+	float3 dv = a * DeltaTime;
+	float3 maxDV = abs(Specks[id].Vel * 1.1);
+	dv = clamp(dv, -maxDV, maxDV);
+	
+	Specks[id].Vel += dv;
+
+
+	//return (KBoundary / nSq) - (KBoundary / pSq);
 }
 
 #pragma kernel UpdateVelocities
@@ -141,6 +150,7 @@ void UpdateVelocities (uint3 id : SV_DispatchThreadID)
 		return;
 
 	float3 force = float3(0, 0, 0);
+	int numNeighbours = 0;
 	Speck thisSpeck = Specks[id.x];
 
 	uint partIdx = PartIndices[id.x].x;
@@ -184,16 +194,20 @@ void UpdateVelocities (uint3 id : SV_DispatchThreadID)
 					}
 
 					force += forceMag * toOther;
+					numNeighbours++;
 				}
 			}
 		}
 	}
 
+	Specks[id.x].D = numNeighbours;
+
 	float3 a = (force * Multiplier) + Gravity;
-	a += CalculateBoundaryForce(id.x);
-	float3 velBefore = Specks[id.x].Vel;
+	//a += CalculateBoundaryForce(id.x);
+	//float3 velBefore = Specks[id.x].Vel;
 	Specks[id.x].Vel += a * DeltaTime;
-	float velDot = dot(velBefore, Specks[id.x].Vel);
+	CalculateBoundaryForce(id.x);
+	//float velDot = dot(velBefore, Specks[id.x].Vel);
 
 	//if (velDot < 0)
 	//{
