@@ -153,7 +153,7 @@ void UpdateVelocities (uint3 id : SV_DispatchThreadID)
 	Specks[id.x].Vel += a * DeltaTime;
 	CalculateBoundaryForce(id.x);
 
-	Specks[id.x].Vel *= 1 - Damper;
+	Specks[id.x].Vel -= Damper * DeltaTime * Specks[id.x].Vel;
 
 	if (length(Specks[id.x].Vel) > MaxVel)
 	{

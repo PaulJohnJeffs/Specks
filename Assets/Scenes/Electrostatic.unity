@@ -294,15 +294,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _numSpecks: 524000
   _speckDiameter: 0.2
-  _bounds: 40
-  _maxVel: 10
-  _maxDist: 0.5
-  _config: {fileID: 11400000, guid: c1140c5bd97c7744abe185349c3f5c14, type: 2}
-  _boundaryConfig: {fileID: 11400000, guid: 54afc709e361e3845913aae74912453c, type: 2}
-  _electrostatConfig: {fileID: 11400000, guid: 764de8f98bd38f945bac652672154129, type: 2}
+  _config: {fileID: 11400000, guid: 764de8f98bd38f945bac652672154129, type: 2}
   _computeShader: {fileID: 7200000, guid: aab02e0c3330b1b478de1e0b8cf00277, type: 3}
   _speckMat: {fileID: 2100000, guid: 30aa97ce1c02dd6478b55710d0f05376, type: 2}
-  _speckMesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+  _speckMesh: {fileID: 0}
+  _updateVelocitiesIdx: 0
+  _updatePositionsIdx: 0
+  _populatePartitionsIdx: 0
+  _sumPartCountsIdx: 0
+  _clearBuffersIdx: 0
+  _sortSpecksIdx: 0
+  _partsPerDim: 0
+  _numParts: 0
+  _bounds: 0
 --- !u!4 &945919992
 Transform:
   m_ObjectHideFlags: 0

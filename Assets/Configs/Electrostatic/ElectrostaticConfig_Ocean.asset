@@ -9,11 +9,20 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ab62d0e254ce5f42a6e4b279fd5ad84, type: 3}
-  m_Name: BoundaryConfig_Default
+  m_Script: {fileID: 11500000, guid: b45f072dbf7ad5d4ea5a2b8058c41010, type: 3}
+  m_Name: ElectrostaticConfig_Ocean
   m_EditorClassIdentifier: 
-  K: 1
-  Phase: 0
-  Amplitude: 0
-  Wavelength: 0.02
+  K: 0.2
+  A: 2.22
+  B: 0.31
+  C: -0.65
+  D: 0.12
+  E: -0.033
+  F: 0.3
+  Multiplier: 1
+  BoundaryWidth: 40
+  KBoundary: 1
   Restitution: 0.1
+  Damper: 0.1
+  _maxVel: 20
+  _maxDist: 0.5

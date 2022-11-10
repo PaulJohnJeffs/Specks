@@ -7,7 +7,7 @@ struct Speck
 	public int D;
 }
 
-public class ElectrostaticSpeckManager : MonoBehaviour
+public class ElectroStaticSpeckManager : MonoBehaviour
 {
 	private const int SPECK_DATA_SIZE = (sizeof(float) * 6) + sizeof(int);
 
@@ -16,23 +16,12 @@ public class ElectrostaticSpeckManager : MonoBehaviour
 	[SerializeField]
 	private float _speckDiameter = 0.1f;
 	[SerializeField]
-	private float _bounds = 1f;
-	[SerializeField]
-	private float _maxVel;
-	[SerializeField]
-	private float _maxDist;
-	[SerializeField]
-	private LiquidSpeckConfig _config;
-	[SerializeField]
-	private BoundaryConfig _boundaryConfig;
-	[SerializeField]
-	private ElectrostaticConfig _electrostatConfig;
+	private ElectrostaticConfig _config;
 	[SerializeField]
 	private ComputeShader _computeShader;
 
 	[SerializeField]
 	private Material _speckMat;
-	[SerializeField]
 	private Mesh _speckMesh;
 
 	private ComputeBuffer _speckCB;
@@ -52,6 +41,7 @@ public class ElectrostaticSpeckManager : MonoBehaviour
 
 	private int _partsPerDim;
 	private int _numParts;
+	private float _bounds;
 
 	private void SetTriangleMesh()
 	{
@@ -75,11 +65,12 @@ public class ElectrostaticSpeckManager : MonoBehaviour
     {
 		SetTriangleMesh();
 
-		_partsPerDim = Mathf.CeilToInt(_bounds / _maxDist);
+		_partsPerDim = Mathf.CeilToInt(_config.BoundaryWidth / _config.MaxDist);
 		_numParts = _partsPerDim * _partsPerDim * _partsPerDim;
-		_bounds = _partsPerDim * _maxDist;
+		_bounds = _partsPerDim * _config.MaxDist;
 		_computeShader.SetInt("PartsPerDim", _partsPerDim);
 		_computeShader.SetInt("NumParts", _numParts);
+		_computeShader.SetInt("NumSpecks", _numSpecks);
 
 		_speckCB = new ComputeBuffer(_numSpecks, SPECK_DATA_SIZE);
 		_sortedSpeckCB = new ComputeBuffer(_numSpecks, SPECK_DATA_SIZE);
@@ -171,24 +162,23 @@ public class ElectrostaticSpeckManager : MonoBehaviour
 
 	public void Update()
 	{
-		_computeShader.SetFloat("K", _electrostatConfig.K);
-		_computeShader.SetFloat("A", _electrostatConfig.A);
-		_computeShader.SetFloat("B", _electrostatConfig.B);
-		_computeShader.SetFloat("C", _electrostatConfig.C);
-		_computeShader.SetFloat("D", _electrostatConfig.D);
-		_computeShader.SetFloat("E", _electrostatConfig.E);
-		_computeShader.SetFloat("F", _electrostatConfig.F);
+		_computeShader.SetFloat("K", _config.K);
+		_computeShader.SetFloat("A", _config.A);
+		_computeShader.SetFloat("B", _config.B);
+		_computeShader.SetFloat("C", _config.C);
+		_computeShader.SetFloat("D", _config.D);
+		_computeShader.SetFloat("E", _config.E);
+		_computeShader.SetFloat("F", _config.F);
 		_computeShader.SetFloat("Multiplier", _config.Multiplier);
 
-		_computeShader.SetFloat("KBoundary", _boundaryConfig.K);
-		_computeShader.SetFloat("Restitution", _boundaryConfig.Restitution);
+		_computeShader.SetFloat("KBoundary", _config.KBoundary);
+		_computeShader.SetFloat("Restitution", _config.Restitution);
 
-		_computeShader.SetInt("NumSpecks", _numSpecks);
 		_computeShader.SetFloat("SpeckRadius", _speckDiameter);
 		_computeShader.SetFloat("Damper", _config.Damper);
 		_computeShader.SetFloat("Bounds", _bounds);
-		_computeShader.SetFloat("MaxDist", _maxDist);
-		_computeShader.SetFloat("MaxVel", _maxVel);
+		_computeShader.SetFloat("MaxDist", _config.MaxDist);
+		_computeShader.SetFloat("MaxVel", _config.MaxVel);
 		_computeShader.SetFloat("DeltaTime", Time.deltaTime);
 		_computeShader.SetVector("Gravity", Physics.gravity);
 

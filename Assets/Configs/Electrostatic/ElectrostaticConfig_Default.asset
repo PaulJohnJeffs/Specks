@@ -19,3 +19,10 @@ MonoBehaviour:
   D: 0.12
   E: -0.033
   F: 0.3
+  Multiplier: 1
+  BoundaryWidth: 40
+  KBoundary: 1
+  Restitution: 0.1
+  Damper: 0.4
+  MaxVel: 10
+  MaxDist: 0.5
