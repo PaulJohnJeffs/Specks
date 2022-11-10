@@ -7,7 +7,7 @@ struct Speck
 	public int D;
 }
 
-public class LiquidManager : MonoBehaviour
+public class ElectrostaticSpeckManager : MonoBehaviour
 {
 	private const int SPECK_DATA_SIZE = (sizeof(float) * 6) + sizeof(int);
 
